@@ -1,0 +1,2 @@
+# Sanity Studio is a client-routed SPA; serve its shell for deep links.
+/admin/* /admin/ 200

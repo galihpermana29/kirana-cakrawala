@@ -1,0 +1,56 @@
+---
+import { urlFor } from '../lib/image';
+import type { AboutSection } from '../lib/types';
+
+interface Props {
+  section: AboutSection;
+}
+
+const { section } = Astro.props;
+const imageUrl = section.image?.asset
+  ? urlFor(section.image).width(1000).height(750).url()
+  : null;
+const paragraphs = (section.body ?? '')
+  .split(/\n{2,}/)
+  .map((p) => p.trim())
+  .filter(Boolean);
+---
+
+<section class="section" id="about">
+  <div class="container about" class:list={{ 'has-image': Boolean(imageUrl) }}>
+    {imageUrl && <img src={imageUrl} alt={section.heading} class="about-image" />}
+    <div>
+      <h2 class="section-heading">{section.heading}</h2>
+      {paragraphs.map((p) => <p class="about-body">{p}</p>)}
+    </div>
+  </div>
+</section>
+
+<style>
+  .about.has-image {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .about-image {
+    border-radius: 0.75rem;
+    width: 100%;
+    height: auto;
+  }
+
+  .about-body {
+    color: var(--color-muted);
+  }
+
+  .about-body + .about-body {
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 48rem) {
+    .about.has-image {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

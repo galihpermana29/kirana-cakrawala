@@ -1,0 +1,11 @@
+---
+import SectionRenderer from '../components/SectionRenderer.astro';
+import Layout from '../layouts/Layout.astro';
+import { getHomePage, getSiteSettings } from '../lib/cms';
+
+const [settings, page] = await Promise.all([getSiteSettings(), getHomePage()]);
+---
+
+<Layout settings={settings} title={page.title} description={settings.tagline}>
+  {page.sections.map((section) => <SectionRenderer section={section} />)}
+</Layout>

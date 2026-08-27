@@ -1,0 +1,107 @@
+---
+import { home } from '../../content/home';
+
+const { whoWeAre } = home;
+---
+
+<section class="section" id="about" data-who>
+  <div class="container">
+    <p class="section-label" data-who-label>{whoWeAre.label}</p>
+    <div class="who-rule" aria-hidden="true"></div>
+    <div class="who-body-block">
+      <p class="who-body">{whoWeAre.body}</p>
+      <p class="who-statement" data-who-statement>{whoWeAre.statement}</p>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, SplitText, motionReady, revealUp, scrambleIn, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-who]');
+  const statement = document.querySelector('[data-who-statement]');
+  const label = document.querySelector('[data-who-label]');
+
+  function revealFrame() {
+    if (!section) return;
+    // Rule sweeps in from the left; body settles up after it.
+    gsap.from('[data-who] .who-rule', {
+      scaleX: 0,
+      transformOrigin: 'left center',
+      duration: 0.8,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: section, start: REVEAL_START },
+    });
+    revealUp('[data-who] .who-body', { trigger: section, delay: 0.15 });
+  }
+
+  if (section && statement && label) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        const split = new SplitText(statement, { type: 'words' });
+        gsap.fromTo(
+          split.words,
+          { color: 'rgba(103, 120, 141, 0.35)' },
+          {
+            color: 'var(--navy)',
+            stagger: 0.08,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: statement,
+              start: 'top 70%',
+              end: 'bottom 45%',
+              scrub: 0.4,
+            },
+          },
+        );
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        const split = new SplitText(statement, { type: 'words' });
+        gsap.fromTo(
+          split.words,
+          { color: 'rgba(103, 120, 141, 0.35)' },
+          {
+            color: 'var(--navy)',
+            stagger: 0.05,
+            duration: 0.25,
+            ease: 'none',
+            scrollTrigger: { trigger: statement, start: REVEAL_START },
+          },
+        );
+      },
+    });
+  }
+</script>
+
+<style>
+  .who-rule {
+    height: 1px;
+    background: linear-gradient(to right, var(--orange), var(--line) 65%);
+    margin-bottom: clamp(1.5rem, 4vw, 2.75rem);
+  }
+
+  .who-body-block {
+    border-left: 2px solid var(--orange);
+    padding-left: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  .who-body {
+    color: var(--slate);
+    max-width: 40rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .who-statement {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.35rem, 3.4vw, 2.4rem);
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    color: var(--navy);
+    max-width: 62rem;
+  }
+</style>

@@ -1,0 +1,83 @@
+---
+import { home } from '../../content/home';
+
+const { commitment } = home;
+---
+
+<section class="band-navy section commitment" data-commitment>
+  <img
+    class="commitment-bg"
+    src={commitment.image.src}
+    alt=""
+    loading="lazy"
+    aria-hidden="true"
+  />
+  <div class="commitment-tint" aria-hidden="true"></div>
+  <div class="container commitment-inner">
+    <p class="section-label" data-commitment-label>{commitment.label}</p>
+    <h2 data-commitment-heading>{commitment.heading}</h2>
+    <p class="section-intro">{commitment.body}</p>
+    <a class="btn btn-primary" href={commitment.cta.href}>
+      {commitment.cta.label}<span class="btn-arrow" aria-hidden="true">›</span>
+    </a>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-commitment]');
+  const label = document.querySelector('[data-commitment-label]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      gsap.from('[data-commitment] h2, [data-commitment] .section-intro, [data-commitment] .btn', {
+        autoAlpha: 0,
+        y: 26,
+        duration: 0.8,
+        ease: EASE,
+        stagger: 0.14,
+        scrollTrigger: { trigger: section, start: REVEAL_START },
+      });
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .commitment {
+    position: relative;
+    overflow: hidden;
+    background: var(--navy);
+  }
+
+  .commitment-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Heavy navy wash keeps the copy the hero of the band, the wing a mood. */
+  .commitment-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      80deg,
+      rgba(1, 15, 36, 0.94) 25%,
+      rgba(1, 30, 65, 0.78) 55%,
+      rgba(1, 30, 65, 0.45)
+    );
+  }
+
+  .commitment-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: start;
+    gap: 1.4rem;
+    max-width: 56rem;
+  }
+</style>

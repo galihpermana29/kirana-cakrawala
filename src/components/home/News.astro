@@ -1,0 +1,147 @@
+---
+import { home } from '../../content/home';
+
+const { news } = home;
+---
+
+<section class="section" id="news" data-news>
+  <div class="container">
+    <p class="section-label" data-news-label>{news.label}</p>
+    <div class="news-head">
+      <div>
+        <h2>{news.heading}</h2>
+        <p class="section-intro">{news.intro}</p>
+      </div>
+      <a class="btn btn-ghost" href={news.showAll.href}>
+        {news.showAll.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+    <div class="news-grid">
+      {
+        news.items.map((item) => (
+          <article class="news-card" data-news-card>
+            <p class="news-date">{item.date}</p>
+            <h3 class="news-title">{item.title}</h3>
+            <p class="news-excerpt">{item.excerpt}</p>
+            <span class="news-more" aria-hidden="true">Read more →</span>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-news]');
+  const label = document.querySelector('[data-news-label]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-news] .news-head > *', {
+        trigger: section,
+        stagger: 0.09,
+      });
+      gsap.from('[data-news-card]', {
+        autoAlpha: 0,
+        y: 34,
+        duration: 0.7,
+        ease: EASE,
+        stagger: 0.12,
+        scrollTrigger: { trigger: section, start: REVEAL_START },
+      });
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .news-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .news-head h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .news-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .news-card {
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    padding: 1.75rem;
+    display: grid;
+    align-content: start;
+    gap: 0.8rem;
+    background: var(--bg);
+    transition:
+      box-shadow 200ms var(--ease-out-expo),
+      transform 140ms var(--ease-out-quad),
+      border-color 150ms ease;
+  }
+
+  .news-card:active {
+    transform: scale(0.99);
+    transition-duration: 90ms;
+  }
+
+  /* Grow toward the cursor (scale), never lift away from it. */
+  @media (hover: hover) and (pointer: fine) {
+    .news-card:hover {
+      transform: scale(1.01);
+      border-color: rgba(0, 130, 202, 0.35);
+      box-shadow: 0 14px 34px rgba(1, 30, 65, 0.1);
+    }
+
+    .news-card:hover .news-more {
+      transform: translateX(4px);
+      color: var(--orange);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .news-card,
+    .news-card:hover,
+    .news-card:active {
+      transform: none;
+    }
+
+    .news-card:hover .news-more {
+      transform: none;
+    }
+  }
+
+  .news-date {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+  }
+
+  .news-excerpt {
+    color: var(--slate);
+    font-size: 0.95rem;
+  }
+
+  .news-more {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    transition:
+      transform 200ms var(--ease-out-expo),
+      color 150ms ease;
+  }
+</style>

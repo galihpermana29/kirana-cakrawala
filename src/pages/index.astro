@@ -1,11 +1,19 @@
 ---
-import SectionRenderer from '../components/SectionRenderer.astro';
-import Layout from '../layouts/Layout.astro';
-import { getHomePage, getSiteSettings } from '../lib/cms';
-
-const [settings, page] = await Promise.all([getSiteSettings(), getHomePage()]);
+import Commitment from '../components/home/Commitment.astro';
+import Domains from '../components/home/Domains.astro';
+import Hero from '../components/home/Hero.astro';
+import News from '../components/home/News.astro';
+import Partners from '../components/home/Partners.astro';
+import WhoWeAre from '../components/home/WhoWeAre.astro';
+import { home } from '../content/home';
+import HomeLayout from '../layouts/HomeLayout.astro';
 ---
 
-<Layout settings={settings} title={page.title} description={settings.tagline}>
-  {page.sections.map((section) => <SectionRenderer section={section} />)}
-</Layout>
+<HomeLayout title={`${home.companyName} - ${home.tagline}`}>
+  <Hero />
+  <WhoWeAre />
+  <Domains />
+  <Partners />
+  <Commitment />
+  <News />
+</HomeLayout>

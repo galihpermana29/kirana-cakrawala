@@ -1,0 +1,267 @@
+---
+import { home } from '../../content/home';
+
+const { hero, brandAbbr } = home;
+---
+
+<section class="hero" data-hero>
+  <div class="hero-ribbon" aria-hidden="true">
+    <img
+      class="hero-image"
+      src={hero.image.src}
+      alt=""
+      fetchpriority="high"
+      data-hero-image
+    />
+    <div class="hero-tint"></div>
+  </div>
+
+  <div class="container hero-grid">
+    <div class="hero-copy">
+      <p class="hero-eyebrow">
+        <span class="eyebrow-dot" aria-hidden="true"></span>
+        <span class="eyebrow-brand">{brandAbbr}</span>
+        {hero.eyebrow}
+      </p>
+      <h1 class="hero-headline">
+        {hero.headlineLines.map((line) => <span class="hero-line" data-hero-line>{line}</span>)}
+      </h1>
+      <p class="hero-sub" data-hero-sub>{hero.subline}</p>
+      <div class="hero-ctas" data-hero-ctas>
+        <a class="btn btn-primary" href={hero.ctaPrimary.href}>
+          {hero.ctaPrimary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+        </a>
+        <a class="btn btn-ghost" href={hero.ctaSecondary.href}>
+          {hero.ctaSecondary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, whenVisible, EASE } from '../../lib/motion';
+
+  const section = document.querySelector('[data-hero]');
+  const ribbon = document.querySelector('.hero-ribbon');
+
+  function introTimeline(withFloat: boolean) {
+    const lines = document.querySelectorAll('[data-hero-line]');
+    lines.forEach((line, i) => scrambleIn(line, { delay: 0.15 + i * 0.35 }));
+    gsap.from('[data-hero-sub]', {
+      autoAlpha: 0,
+      y: 14,
+      duration: 0.6,
+      ease: EASE,
+      delay: 0.9,
+    });
+    gsap.from('[data-hero-ctas] .btn', {
+      autoAlpha: 0,
+      y: 18,
+      duration: 0.7,
+      ease: EASE,
+      stagger: 0.12,
+      delay: 1.05,
+    });
+    if (withFloat) {
+      // Slow Ken Burns push on the aircraft so the ribbon breathes.
+      gsap.to('[data-hero-image]', {
+        scale: 1.42,
+        duration: 24,
+        repeat: -1,
+        yoyo: true,
+        ease: 'sine.inOut',
+      });
+    }
+  }
+
+  if (section) {
+    motionReady(section, {
+      desktop: () =>
+        whenVisible(() => {
+          // The band arrives first, sliding in as the headline decodes.
+          if (ribbon) {
+            gsap.from(ribbon, { autoAlpha: 0, x: 90, duration: 1.1, ease: EASE });
+          }
+          introTimeline(true);
+        }),
+      mobile: () =>
+        whenVisible(() => {
+          introTimeline(false);
+          // Full-bleed image sits below the fold-copy - reveal on scroll.
+          if (ribbon) revealUp(ribbon, { trigger: ribbon, y: 40, duration: 0.9 });
+        }),
+    });
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    padding-block: clamp(4rem, 9vw, 7.5rem) clamp(4rem, 8vw, 6rem);
+  }
+
+  /* The focal ribbon: a hard-edged, rotated band carrying the aircraft -
+     an object, not a background wash. */
+  .hero-ribbon {
+    position: absolute;
+    top: -22%;
+    right: -14%;
+    width: 58%;
+    height: 145%;
+    transform: rotate(9deg);
+    border-radius: 3.5rem;
+    overflow: hidden;
+    box-shadow: 0 40px 90px rgba(1, 30, 65, 0.28);
+    background: var(--navy-deep);
+  }
+
+  /* Counter-rotate so the horizon stays level inside the tilted band;
+     object-position keeps the aircraft in the band's visible crop. */
+  .hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 40% 55%;
+    transform: rotate(-9deg) scale(1.22);
+    transform-origin: center;
+  }
+
+  /* Navy ramp from the card side into the open sunset - the image's own
+     orange does the accent work, so no blue overlay on top of it. */
+  .hero-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      25deg,
+      rgba(1, 30, 65, 0.78) 12%,
+      rgba(1, 30, 65, 0.28) 48%,
+      rgba(1, 30, 65, 0.05)
+    );
+  }
+
+  .hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    gap: clamp(2rem, 5vw, 4rem);
+    align-items: center;
+  }
+
+  .hero-copy {
+    display: grid;
+    justify-items: start;
+    gap: 1.5rem;
+    padding-block: clamp(2rem, 5vw, 4rem);
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .eyebrow-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+    animation: eyebrow-pulse 2s ease-out infinite;
+  }
+
+  @keyframes eyebrow-pulse {
+    0%,
+    100% {
+      box-shadow: 0 0 0 0 rgba(249, 156, 36, 0.45);
+    }
+    50% {
+      box-shadow: 0 0 0 6px rgba(249, 156, 36, 0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eyebrow-dot {
+      animation: none;
+    }
+  }
+
+  .eyebrow-brand {
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  .eyebrow-brand::after {
+    content: ' /';
+    color: var(--slate);
+  }
+
+  .hero-headline {
+    font-size: clamp(2rem, 3.5vw, 3.25rem);
+    line-height: 1.08;
+  }
+
+  .hero-line {
+    display: block;
+  }
+
+  .hero-sub {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: clamp(0.78rem, 1.4vw, 0.9rem);
+    color: var(--slate);
+    max-width: 34rem;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+
+  /* Mobile/tablet: copy on white up top, then the aircraft full-bleed
+     below it - never behind the text. The clipped top edge echoes the
+     desktop ribbon's diagonal. */
+  @media (max-width: 1023.98px) {
+    .hero {
+      display: flex;
+      flex-direction: column;
+      padding-block: 2.5rem 0;
+    }
+
+    .hero-grid {
+      order: 1;
+      grid-template-columns: 1fr;
+    }
+
+    .hero-copy {
+      padding-block: 1rem 0;
+    }
+
+    .hero-ribbon {
+      order: 2;
+      position: relative;
+      inset: auto;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 16 / 11;
+      margin-top: 2.25rem;
+      transform: none;
+      border-radius: 0;
+      box-shadow: none;
+      clip-path: polygon(0 7%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .hero-image {
+      transform: scale(1.06);
+    }
+  }
+</style>

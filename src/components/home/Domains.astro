@@ -1,0 +1,287 @@
+---
+import { home } from '../../content/home';
+
+const { whatWeDo } = home;
+---
+
+<section class="band-navy section domains-section" id="pillars" data-domains>
+  <div class="container">
+    <p class="section-label" data-domains-label>{whatWeDo.label}</p>
+    <div class="domains-head">
+      <h2>{whatWeDo.heading}</h2>
+      <p class="section-intro">{whatWeDo.intro}</p>
+    </div>
+  </div>
+
+  <div class="domains-stage" data-domains-stage>
+    <div class="container domains-tabs" data-domains-tabs role="tablist" aria-label="Domains">
+      {
+        whatWeDo.pillars.map((pillar, i) => (
+          <button
+            class:list={['domains-tab', { active: i === 0 }]}
+            data-domain-tab={i}
+            role="tab"
+            aria-selected={i === 0 ? 'true' : 'false'}
+          >
+            {pillar.name}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="domains-panels">
+      {
+        whatWeDo.pillars.map((pillar, i) => (
+          <article
+            class:list={['domain-panel', { active: i === 0 }]}
+            data-domain-panel={i}
+          >
+            <div
+              class="domain-media"
+              style={`background-image: url('${pillar.image.src}')`}
+              role="img"
+              aria-label={pillar.image.alt}
+            />
+            <div class="domain-overlay" aria-hidden="true" />
+            <div class="container domain-copy">
+              <h3 class="domain-name">{pillar.name}</h3>
+              <p class="domain-description">{pillar.description}</p>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, ScrollTrigger, motionReady, revealUp, scrambleIn, EASE } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-domains]');
+  const stage = document.querySelector<HTMLElement>('[data-domains-stage]');
+  const label = document.querySelector('[data-domains-label]');
+  const panels = gsap.utils.toArray<HTMLElement>('[data-domain-panel]');
+  const tabs = gsap.utils.toArray<HTMLButtonElement>('[data-domain-tab]');
+
+  function setActive(index: number) {
+    panels.forEach((panel, i) => panel.classList.toggle('active', i === index));
+    tabs.forEach((tab, i) => {
+      tab.classList.toggle('active', i === index);
+      tab.setAttribute('aria-selected', String(i === index));
+    });
+  }
+
+  function revealHead() {
+    if (!section) return;
+    // Heading leads, intro follows, tabs trail in a quick file.
+    revealUp('[data-domains] .domains-head > *', {
+      trigger: section,
+      stagger: 0.09,
+    });
+    revealUp('[data-domain-tab]', {
+      trigger: section,
+      delay: 0.2,
+      stagger: 0.05,
+      y: 14,
+      duration: 0.5,
+    });
+  }
+
+  if (section && stage && label && panels.length) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        section.classList.add('staged');
+
+        const steps = panels.length - 1;
+        const trigger = ScrollTrigger.create({
+          trigger: stage,
+          start: 'top top',
+          end: () => `+=${steps * window.innerHeight * 0.85}`,
+          pin: true,
+          scrub: true,
+          snap: {
+            snapTo: 1 / steps,
+            duration: { min: 0.15, max: 0.45 },
+            ease: 'power1.inOut',
+          },
+          onUpdate: (self) => {
+            setActive(Math.round(self.progress * steps));
+          },
+        });
+
+        tabs.forEach((tab, i) => {
+          tab.addEventListener('click', () => {
+            const y =
+              trigger.start + (trigger.end - trigger.start) * (i / steps);
+            window.scrollTo({ top: y, behavior: 'smooth' });
+          });
+        });
+
+        return () => {
+          trigger.kill();
+          section.classList.remove('staged');
+          setActive(0);
+        };
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        panels.forEach((panel) => {
+          gsap.from(panel, {
+            autoAlpha: 0,
+            y: 32,
+            duration: 0.7,
+            ease: EASE,
+            scrollTrigger: { trigger: panel, start: 'top 78%' },
+          });
+        });
+      },
+    });
+  }
+</script>
+
+<style>
+  .domains-section {
+    padding-bottom: 0;
+  }
+
+  .domains-head {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: clamp(2rem, 5vw, 3.5rem);
+    max-width: 52rem;
+  }
+
+  .domains-tabs {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-bottom: 1.4rem;
+  }
+
+  .domains-tab {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.75);
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 0.55rem 1.15rem;
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .domains-tab:active {
+    transform: scale(0.94);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .domains-tab:hover {
+      background: rgba(255, 255, 255, 0.16);
+    }
+  }
+
+  .domains-tab.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--navy);
+    animation: tab-pop 260ms var(--ease-out-expo);
+  }
+
+  @keyframes tab-pop {
+    0% {
+      transform: scale(0.92);
+    }
+    60% {
+      transform: scale(1.04);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .domains-tab,
+    .domains-tab:active,
+    .domains-tab.active {
+      transform: none;
+      animation: none;
+    }
+  }
+
+  /* Default (mobile / reduced / no-JS): stacked cards. */
+  .domain-panel {
+    position: relative;
+    min-height: 68vh;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+  }
+
+  .domain-media {
+    position: absolute;
+    inset: 0;
+    background-color: var(--navy-deep);
+    background-size: cover;
+    background-position: center;
+  }
+
+  .domain-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      75deg,
+      rgba(1, 15, 36, 0.92) 12%,
+      rgba(1, 15, 36, 0.45) 55%,
+      rgba(1, 15, 36, 0.15)
+    );
+  }
+
+  .domain-copy {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    padding-block: clamp(2rem, 5vw, 3.5rem);
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .domain-name {
+    font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+    border-left: 3px solid var(--orange);
+    padding-left: 0.9rem;
+  }
+
+  .domain-description {
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 34rem;
+  }
+
+  /* Desktop stage mode (added by JS): panels stack in one pinned viewport. */
+  .staged .domains-panels {
+    position: relative;
+    height: calc(100vh - 4.5rem);
+  }
+
+  .staged .domain-panel {
+    position: absolute;
+    inset: 0;
+    min-height: 0;
+    opacity: 0;
+    transition: opacity 480ms ease;
+    pointer-events: none;
+  }
+
+  .staged .domain-panel.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+</style>

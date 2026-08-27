@@ -28,8 +28,11 @@ export interface WhoWeAreContent {
   body: string;
 }
 
+export type PillarId = 'parts' | 'mro' | 'technical' | 'network';
+
 export interface Pillar {
-  id: string;
+  /* Also the key each pillar page is looked up by (src/content/what-we-do.ts). */
+  id: PillarId;
   name: string;
   description: string;
   image: SourcedImage;
@@ -104,12 +107,14 @@ export const home: HomeContent = {
   companyName: 'Kirana Cakrawala',
   brandAbbr: 'KCA',
   tagline: 'Your Integrated Aviation Aftermarket Partner',
+  // Anchors are written absolute (/#about) so the shared header and footer
+  // resolve from inner pages too; each becomes a real route as its page lands.
   nav: [
-    { label: 'About Us', href: '#about' },
-    { label: 'What We Do', href: '#pillars' },
-    { label: 'Partners', href: '#ecosystem' },
-    { label: 'News & Articles', href: '#news' },
-    { label: 'Contact Us', href: '#contact' },
+    { label: 'About Us', href: '/#about' },
+    { label: 'What We Do', href: '/what-we-do' },
+    { label: 'Partners', href: '/#ecosystem' },
+    { label: 'News & Articles', href: '/#news' },
+    { label: 'Contact Us', href: '/#contact' },
   ],
   hero: {
     eyebrow: 'AOG support, 24/7 - Jakarta HQ',
@@ -167,9 +172,8 @@ export const home: HomeContent = {
           'economic value of aviation assets.',
         image: {
           src: '/images/pillar-mro.jpg',
-          alt: 'Technician performing maintenance on an aircraft engine',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Abraham_Lincoln_Conducts_Aircraft_Maintenance_(9664557).jpg',
+          alt: 'Turbofan engine on a stand in a maintenance hangar',
+          sourceUrl: 'https://unsplash.com/photos/fkcjWXPRAZU',
         },
       },
       {
@@ -181,9 +185,8 @@ export const home: HomeContent = {
           'availability and operational readiness.',
         image: {
           src: '/images/pillar-technical.jpg',
-          alt: 'Engineers working on an aircraft on the flight line',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Avionics_Technician_Maintains_Aircraft_Systems_(9870935).jpg',
+          alt: 'Technician in a hi-vis vest inspecting the underside of an airliner wing',
+          sourceUrl: 'https://unsplash.com/photos/7OgQ-Ze7BXQ',
         },
       },
       {
@@ -195,9 +198,8 @@ export const home: HomeContent = {
           'sourcing.',
         image: {
           src: '/images/pillar-network.jpg',
-          alt: 'Cargo aircraft being loaded with air freight',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Evergreen_B747F_-_Cargo-In-Cargo-Out_DVIDS171689.jpg',
+          alt: 'Open cargo hold of a freighter aircraft with netted air freight pallets',
+          sourceUrl: 'https://unsplash.com/photos/D1H7jEwlWMU',
         },
       },
     ],

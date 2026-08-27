@@ -163,3 +163,35 @@ export function scrambleIn(
     },
   );
 }
+
+/**
+ * Scroll-lit statement: words start muted and light up to navy as the
+ * reader reaches them. `scrub` ties the lighting to the scroll position
+ * (desktop); without it the words light once on entry (mobile). Call only
+ * inside motionReady contexts.
+ */
+export function lightWords(target: Element, opts: { scrub?: boolean } = {}): void {
+  const split = new SplitText(target, { type: 'words' });
+  const muted = { color: 'rgba(103, 120, 141, 0.35)' };
+  if (opts.scrub) {
+    gsap.fromTo(split.words, muted, {
+      color: 'var(--navy)',
+      stagger: 0.06,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: target,
+        start: 'top 72%',
+        end: 'bottom 45%',
+        scrub: 0.4,
+      },
+    });
+    return;
+  }
+  gsap.fromTo(split.words, muted, {
+    color: 'var(--navy)',
+    stagger: 0.04,
+    duration: 0.25,
+    ease: 'none',
+    scrollTrigger: { trigger: target, start: REVEAL_START },
+  });
+}

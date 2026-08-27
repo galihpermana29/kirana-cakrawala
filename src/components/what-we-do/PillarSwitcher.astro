@@ -1,0 +1,204 @@
+---
+import type { PillarId } from '../../content/home';
+import { pad, pillarPages, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+
+interface Props {
+  current: PillarId;
+}
+
+const { current } = Astro.props;
+---
+
+<!-- One template, four instances: the strip makes the sibling pillars one
+     tap away from the top of every pillar page. -->
+<nav class="switcher" aria-label="Pillars" data-switcher>
+  <div class="container switcher-inner">
+    <a class="switcher-label" href={WHAT_WE_DO_PATH}>Pillars</a>
+    <div class="switcher-pills" data-switcher-pills>
+      {
+        pillarPages.map((pillar) => (
+          <a
+            class:list={['switcher-pill', { active: pillar.id === current }]}
+            href={pillar.href}
+            aria-current={pillar.id === current ? 'page' : undefined}
+            data-switcher-pill
+          >
+            <span class="pill-index" aria-hidden="true">
+              {pad(pillar.index)}
+            </span>
+            {pillar.name}
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</nav>
+
+<script>
+  import { motionReady, revealUp, whenVisible } from '../../lib/motion';
+
+  const nav = document.querySelector('[data-switcher]');
+  const pills = nav?.querySelector<HTMLElement>('[data-switcher-pills]');
+  const active = nav?.querySelector<HTMLElement>('.switcher-pill.active');
+
+  // On phones the row scrolls: start it on the current pillar, not the first.
+  // Layout, not motion - so it runs for reduce-motion visitors too.
+  if (pills && active && pills.scrollWidth > pills.clientWidth) {
+    pills.scrollLeft = active.offsetLeft - parseFloat(getComputedStyle(pills).paddingLeft);
+  }
+
+  if (nav) {
+    motionReady(nav, {
+      // On desktop the strip is in view at load: it files in after the
+      // hero intro rather than competing with it.
+      desktop: () =>
+        whenVisible(() =>
+          revealUp('[data-switcher-pill]', {
+            delay: 1.0,
+            stagger: 0.05,
+            y: 12,
+            duration: 0.55,
+          }),
+        ),
+      mobile: () =>
+        revealUp('[data-switcher-pill]', {
+          trigger: nav,
+          stagger: 0.05,
+          y: 12,
+          duration: 0.55,
+        }),
+    });
+  }
+</script>
+
+<style>
+  .switcher {
+    border-block: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .switcher-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 4rem;
+  }
+
+  .switcher-label {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    color: var(--orange);
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+
+  .switcher-label::before {
+    content: '/ ';
+  }
+
+  .switcher-pills {
+    /* offsetParent for the pills, so offsetLeft is row-relative. */
+    position: relative;
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-block: 0.75rem;
+  }
+
+  /* Light-ground twin of the homepage's .domains-tab. */
+  .switcher-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid rgba(1, 30, 65, 0.22);
+    border-radius: 999px;
+    padding: 0.5rem 1.05rem 0.5rem 0.85rem;
+    white-space: nowrap;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .pill-index {
+    color: var(--orange);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  .switcher-pill:active {
+    transform: scale(0.95);
+  }
+
+  .switcher-pill.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--navy);
+  }
+
+  .switcher-pill.active .pill-index {
+    color: var(--navy);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .switcher-label:hover {
+      color: var(--blue);
+    }
+
+    .switcher-pill:not(.active):hover {
+      border-color: var(--navy);
+      background: rgba(1, 30, 65, 0.05);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .switcher-pill,
+    .switcher-pill:active {
+      transform: none;
+    }
+  }
+
+  /* Phones: one scrollable row, snapping pill by pill. */
+  @media (max-width: 767.98px) {
+    .switcher-inner {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0;
+      padding-block: 0.9rem;
+    }
+
+    .switcher-pills {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      /* Keeps the first pill off the screen edge when snap aligns it. */
+      scroll-padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+      scrollbar-width: none;
+      padding-block: 0.6rem 0.2rem;
+      /* Let the row run to the container edge on both sides. */
+      margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem));
+      padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .switcher-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .switcher-pill {
+      scroll-snap-align: start;
+      flex: 0 0 auto;
+    }
+  }
+</style>

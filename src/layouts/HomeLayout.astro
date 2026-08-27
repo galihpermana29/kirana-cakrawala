@@ -9,6 +9,12 @@ interface Props {
 
 const { title = home.companyName, description = home.tagline } = Astro.props;
 const year = new Date().getFullYear();
+
+// Marks the nav entry for the page (or section of pages) being viewed.
+// Anchor hrefs never match - they point at homepage sections, not routes.
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+const isCurrent = (href: string) =>
+  !href.includes('#') && (path === href || path.startsWith(`${href}/`));
 ---
 
 <html lang="en">
@@ -34,7 +40,13 @@ const year = new Date().getFullYear();
           <span class="brand-name">{home.companyName}</span>
         </a>
         <nav class="site-nav" aria-label="Main">
-          {home.nav.map((item) => <a href={item.href}>{item.label}</a>)}
+          {
+            home.nav.map((item) => (
+              <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                {item.label}
+              </a>
+            ))
+          }
         </nav>
         <button
           class="nav-toggle"
@@ -46,7 +58,13 @@ const year = new Date().getFullYear();
         </button>
       </div>
       <nav class="mobile-nav" aria-label="Mobile" data-mobile-nav>
-        {home.nav.map((item) => <a href={item.href}>{item.label}</a>)}
+        {
+          home.nav.map((item) => (
+            <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              {item.label}
+            </a>
+          ))
+        }
       </nav>
     </header>
 
@@ -188,6 +206,15 @@ const year = new Date().getFullYear();
     }
   }
 
+  /* The current section of the site keeps its underline. */
+  .site-nav a[aria-current='page'] {
+    color: var(--blue);
+  }
+
+  .site-nav a[aria-current='page']::after {
+    transform: scaleX(1);
+  }
+
   .nav-toggle {
     display: none;
     flex-direction: column;
@@ -229,6 +256,10 @@ const year = new Date().getFullYear();
 
   .mobile-nav.open {
     display: flex;
+  }
+
+  .mobile-nav a[aria-current='page'] {
+    color: var(--blue);
   }
 
   @media (max-width: 1023.98px) {

@@ -22,6 +22,7 @@ Then open the page in Chrome (dev server: `astro dev --background`, site at `loc
 
 - `src/content/home.ts` - the homepage content seam: typed interfaces + data. Inner pages follow the same pattern: one typed module per page under `src/content/`, components read from it and nothing else.
 - `src/pages/index.astro` - the homepage, composing `src/components/home/*` sections inside `HomeLayout`.
+- `src/content/what-we-do.ts` - the What We Do seam: the hub (`/what-we-do`) plus the four pillar pages (`PillarPage[]`, one per homepage pillar id, expanding missions 1-4). `src/pages/what-we-do/[slug].astro` is the single template; `src/pages/what-we-do/index.astro` the hub; sections live in `src/components/what-we-do/` (`PillarHero`, `PillarSwitcher`, `PillarOverview`, `PillarCapabilities`, `PillarProcess`, `PillarGrid`, `PillarCta`) and take the pillar as a prop.
 - `src/layouts/HomeLayout.astro` - the live site shell: sticky header with nav (desktop links + mobile overlay menu), footer with contact block. Inner pages use this layout. (`Layout.astro` is the legacy Sanity-era shell; do not use it for new pages.)
 - `src/components/home/` - the homepage sections: `Hero`, `WhoWeAre`, `Domains` (four pillar panels, pinned on desktop), `Partners` (dotted map + category marquee), `Commitment`, `News`. Reuse their patterns and CSS vocabulary; new page sections go in `src/components/<page>/`.
 - `src/lib/motion.ts` - GSAP setup and the ONLY entry points for animation: `motionReady` (desktop/mobile/reduced-motion contexts), `revealUp` (house scroll entrance), `scrambleIn` (label decode), `whenVisible`, `REVEAL_START`.
@@ -41,7 +42,7 @@ Then open the page in Chrome (dev server: `astro dev --background`, site at `loc
 
 ## Conventions
 
-- Nav hrefs in `src/content/home.ts` currently point at homepage anchors; when an inner page exists, update its nav entry to the real route.
+- Nav hrefs in `src/content/home.ts` are absolute (`/#about`, not `#about`) so the shared header and footer resolve from inner pages; `What We Do` already points at `/what-we-do`. When another inner page lands, update its nav entry to the real route - and `aboutLink` / `contactLink` in `src/content/what-we-do.ts` if it is About or Contact, since the pillar pages link out through those.
 - Shared header/footer live in `HomeLayout.astro`; page titles are `"<Page> - Kirana Cakrawala"`.
 - Scoped `<style>` per component; shared utilities in `global.css`. Only `transform` and `opacity` animate.
 - `?static=1` on any URL renders the page with no animation (final states) - use it for layout screenshots.

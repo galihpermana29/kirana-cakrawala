@@ -1,5 +1,6 @@
 ---
 import { home } from '../../content/home';
+import { pillarPage, whatWeDoLabels } from '../../content/what-we-do';
 
 const { whatWeDo } = home;
 ---
@@ -46,6 +47,9 @@ const { whatWeDo } = home;
             <div class="container domain-copy">
               <h3 class="domain-name">{pillar.name}</h3>
               <p class="domain-description">{pillar.description}</p>
+              <a class="btn btn-ghost domain-link" href={pillarPage(pillar.id).href}>
+                {whatWeDoLabels.explore} {pillar.name}<span class="btn-arrow" aria-hidden="true">›</span>
+              </a>
             </div>
           </article>
         ))
@@ -263,6 +267,12 @@ const { whatWeDo } = home;
   .domain-description {
     color: rgba(255, 255, 255, 0.78);
     max-width: 34rem;
+  }
+
+  /* Each panel links into its pillar page. */
+  .domain-link {
+    justify-self: start;
+    margin-top: 0.5rem;
   }
 
   /* Desktop stage mode (added by JS): panels stack in one pinned viewport. */

@@ -1,0 +1,203 @@
+---
+import { pad, type PillarPage } from '../../content/what-we-do';
+
+interface Props {
+  pillar: PillarPage;
+}
+
+const { process } = Astro.props.pillar;
+---
+
+<section class="section" id="how-we-work" data-process>
+  <div class="container">
+    <p class="section-label" data-process-label>{process.label}</p>
+    <div class="section-head">
+      <h2>{process.heading}</h2>
+      <p class="section-intro">{process.intro}</p>
+    </div>
+    <!-- The rail sits beside the list, not inside it: <ol> only takes <li>. -->
+    <div class="process-track">
+      <span class="process-rail" data-process-rail aria-hidden="true"></span>
+      <ol class="process-steps" data-process-steps>
+      {
+        process.steps.map((step, i) => (
+          <li class="process-step" data-process-step>
+            <span class="step-node" data-step-node aria-hidden="true" />
+            <div class="step-copy" data-step-copy>
+              <p class="step-index">Step {pad(i + 1)}</p>
+              <h3 class="step-title">{step.title}</h3>
+              <p class="step-description">{step.description}</p>
+            </div>
+          </li>
+        ))
+      }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-process]');
+  const label = document.querySelector('[data-process-label]');
+  const steps = document.querySelector('[data-process-steps]');
+  const rail = document.querySelector('[data-process-rail]');
+
+  function revealHead() {
+    if (!section) return;
+    revealUp('[data-process] .section-head > *', {
+      trigger: section,
+      stagger: 0.09,
+    });
+  }
+
+  if (section && label && steps && rail) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        // The rail draws left to right; each node pops as it passes, and
+        // the step copy settles up beneath it.
+        gsap.from(rail, {
+          scaleX: 0,
+          duration: 1.2,
+          ease: EASE,
+          scrollTrigger: { trigger: steps, start: REVEAL_START },
+        });
+        gsap.from('[data-step-node]', {
+          scale: 0.3,
+          transformOrigin: 'center',
+          duration: 0.45,
+          ease: 'back.out(2.5)',
+          stagger: 0.16,
+          delay: 0.1,
+          scrollTrigger: { trigger: steps, start: REVEAL_START },
+        });
+        revealUp('[data-step-copy]', {
+          trigger: steps,
+          delay: 0.2,
+          stagger: 0.16,
+          y: 24,
+        });
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        gsap.from(rail, {
+          scaleY: 0,
+          duration: 1.2,
+          ease: EASE,
+          scrollTrigger: { trigger: steps, start: REVEAL_START },
+        });
+        // Stacked steps each enter on their own trigger so the last one is
+        // not spent while still below the fold.
+        gsap.utils.toArray<HTMLElement>('[data-process-step]').forEach((step) => {
+          gsap.from(step.querySelector('[data-step-node]'), {
+            scale: 0.3,
+            transformOrigin: 'center',
+            duration: 0.45,
+            ease: 'back.out(2.5)',
+            scrollTrigger: { trigger: step, start: 'top 80%' },
+          });
+          revealUp(step.querySelector('[data-step-copy]'), {
+            trigger: step,
+            y: 22,
+            duration: 0.7,
+          });
+        });
+      },
+    });
+  }
+</script>
+
+<style>
+  .process-track {
+    position: relative;
+  }
+
+  .process-steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(1.5rem, 3vw, 2.5rem);
+  }
+
+  /* Runs through the centre of the nodes. */
+  .process-rail {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(0.475rem - 1px);
+    height: 2px;
+    background: linear-gradient(to right, var(--orange), var(--line) 80%);
+    transform-origin: left center;
+  }
+
+  .process-step {
+    position: relative;
+    display: grid;
+    align-content: start;
+    gap: 0;
+  }
+
+  .step-node {
+    display: block;
+    width: 0.95rem;
+    height: 0.95rem;
+    border-radius: 50%;
+    background: var(--orange);
+    border: 3px solid #fff;
+    box-shadow: 0 0 0 3px rgba(249, 156, 36, 0.28);
+    margin-bottom: 1.4rem;
+  }
+
+  .step-copy {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .step-index {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+  }
+
+  .step-title {
+    font-size: 1.05rem;
+  }
+
+  .step-description {
+    color: var(--slate);
+    font-size: 0.95rem;
+  }
+
+  /* Below desktop the rail turns vertical and the steps stack beside it. */
+  @media (max-width: 1023.98px) {
+    .process-steps {
+      grid-template-columns: 1fr;
+      gap: 2.25rem;
+      padding-left: 2.25rem;
+    }
+
+    .process-rail {
+      left: calc(0.475rem - 1px);
+      right: auto;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      height: auto;
+      background: linear-gradient(to bottom, var(--orange), var(--line) 80%);
+      transform-origin: top center;
+    }
+
+    .step-node {
+      position: absolute;
+      left: -2.25rem;
+      top: 0.15rem;
+      margin: 0;
+    }
+  }
+</style>

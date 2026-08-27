@@ -122,6 +122,15 @@ a {
   font-size: 1.02rem;
 }
 
+/* Heading + intro block under the section label; every section opens
+   with one. */
+.section-head {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
+  max-width: 52rem;
+}
+
 /* Full-bleed navy band: the light-page translation of scytalys's
    full-bleed dark moments. */
 .band-navy {

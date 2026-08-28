@@ -1,0 +1,48 @@
+---
+import PartnerCategories from '../../components/partners/PartnerCategories.astro';
+import PartnerNetwork from '../../components/partners/PartnerNetwork.astro';
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
+import PillarHero from '../../components/what-we-do/PillarHero.astro';
+import PillarOverview from '../../components/what-we-do/PillarOverview.astro';
+import { home } from '../../content/home';
+import {
+  ECOSYSTEM_ANCHOR,
+  partnerCategories,
+  partnersLabels,
+  partnersPage,
+} from '../../content/partners';
+import { aboutLink, contactLink, ctaImage, pillarPages } from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// The Partners page: mission 5 expanded - who KCA partners with and what the
+// integrated ecosystem means for each of them. Opens and closes like every
+// inner page, and links out through the four pillars it runs on.
+---
+
+<HomeLayout
+  title={`${partnersPage.title} - ${home.companyName}`}
+  description={partnersPage.standfirst}
+>
+  <PillarHero
+    crumb={home.brandAbbr}
+    eyebrow={partnersPage.title}
+    heading={partnersPage.heading}
+    standfirst={partnersPage.standfirst}
+    image={partnersPage.image}
+    primary={{ label: partnersLabels.partnerWithUs, href: contactLink.href }}
+    secondary={{ label: partnersLabels.meetEcosystem, href: `#${ECOSYSTEM_ANCHOR}` }}
+  />
+  <PillarOverview overview={partnersPage.overview} />
+  <PartnerCategories head={partnersPage.categories} items={partnerCategories} />
+  <PartnerNetwork head={partnersPage.network} />
+  <PillarGrid head={partnersPage.pillars} items={pillarPages} />
+  <PillarCta
+    label={partnersPage.cta.label}
+    heading={partnersPage.cta.heading}
+    body={partnersPage.cta.body}
+    primary={contactLink}
+    secondary={aboutLink}
+    image={ctaImage}
+  />
+</HomeLayout>

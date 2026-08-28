@@ -19,10 +19,11 @@ Update this file whenever an image is added, replaced, or removed.
 | `news-introducing-kca.jpg` | [Unsplash - Airliner silhouetted against the sun after takeoff, by Sean Davis](https://unsplash.com/photos/8FwJg9--peo) | Unsplash License (free; attribution appreciated, not required) |
 
 The hero background is a generated canvas gradient, not an image.
-The dotted world map is generated at build time by the `dotted-map` package.
+The dotted world map is generated at build time by the `dotted-map` package - 60 dot rows on the homepage, 80 on the larger `/partners` map, whose HQ-to-region arcs are drawn from the same map coordinates.
 The ecosystem marquee shows partner-category wordmarks, not company logos - real logos require each partner's brand assets and permission.
 Removed 2026-08-27: the four military `domain-*.jpg` images from the KCN-derived draft (content pivoted to aviation aftermarket per `docs/positioning.md`).
 Replaced 2026-08-28: `pillar-mro.jpg`, `pillar-technical.jpg`, and `pillar-network.jpg` swapped from U.S. military / DVIDS photos to civil-aviation, brand-free Unsplash images - the pillar pages (`/what-we-do/*`) promote them to full-bleed heroes, and the site must carry no military imagery or airline branding.
 `hero-aircraft.jpg` is also used as the `/what-we-do` hub hero.
 Added 2026-08-28: the five `news-*.jpg` images for `/news` (listing hero plus four article pictures), all civil-aviation Unsplash photos checked for airline branding before adoption.
 The Component MRO and Technical Services articles reuse `pillar-mro.jpg` and `pillar-technical.jpg` rather than shipping duplicates of the same photos.
+`news-aftermarket-ecosystem.jpg` is also the `/partners` hero (added 2026-08-28): silhouetted, brand-free airliners sharing one apron is the ecosystem picture, and the page's other imagery is the four pillar photos in its cross-link grid.

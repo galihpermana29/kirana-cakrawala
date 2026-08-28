@@ -51,6 +51,22 @@ export interface NetworkNode {
   yPct: number;
 }
 
+export type PartnerCategoryId =
+  | 'oems'
+  | 'airlines'
+  | 'mros'
+  | 'lessors'
+  | 'operators'
+  | 'financial-institutions'
+  | 'aviation-investors';
+
+/* A partner category as the homepage marquee shows it; the Partners page
+   expands each one (src/content/partners.ts), keyed by id. */
+export interface PartnerCategorySummary {
+  id: PartnerCategoryId;
+  name: string;
+}
+
 export interface ContactContent {
   address: string;
   email: string;
@@ -74,10 +90,15 @@ export interface HomeContent {
     label: string;
     heading: string;
     intro: string;
-    /* Partner categories cycled in the marquee - no invented company names. */
-    categories: string[];
+    /* Partner categories cycled in the marquee - no invented company names.
+       Each links into its tab on the Partners page. */
+    categories: PartnerCategorySummary[];
     /* Neutral nodes visualizing the global supply network on the dotted map. */
     network: NetworkNode[];
+    /* The map's anchor pin - the only location the site names. */
+    hq: NetworkNode;
+    /* Into the Partners page. */
+    link: NavItem;
   };
   commitment: {
     label: string;
@@ -107,7 +128,7 @@ export const home: HomeContent = {
   nav: [
     { label: 'About Us', href: '/#about' },
     { label: 'What We Do', href: '/what-we-do' },
-    { label: 'Partners', href: '/#ecosystem' },
+    { label: 'Partners', href: '/partners' },
     { label: 'News & Articles', href: '/news' },
     { label: 'Contact Us', href: '/#contact' },
   ],
@@ -207,13 +228,13 @@ export const home: HomeContent = {
       'operators, financial institutions, and aviation investors - an ' +
       'integrated and scalable aviation aftermarket ecosystem.',
     categories: [
-      'OEMs',
-      'Airlines',
-      'MROs',
-      'Lessors',
-      'Operators',
-      'Financial Institutions',
-      'Aviation Investors',
+      { id: 'oems', name: 'OEMs' },
+      { id: 'airlines', name: 'Airlines' },
+      { id: 'mros', name: 'MROs' },
+      { id: 'lessors', name: 'Lessors' },
+      { id: 'operators', name: 'Operators' },
+      { id: 'financial-institutions', name: 'Financial Institutions' },
+      { id: 'aviation-investors', name: 'Aviation Investors' },
     ],
     network: [
       { name: 'Americas', xPct: 15, yPct: 38 },
@@ -221,6 +242,8 @@ export const home: HomeContent = {
       { name: 'Middle East', xPct: 60, yPct: 45 },
       { name: 'East Asia', xPct: 82, yPct: 40 },
     ],
+    hq: { name: 'Jakarta HQ', xPct: 79, yPct: 57 },
+    link: { label: 'Explore the Ecosystem', href: '/partners' },
   },
   commitment: {
     label: 'Our Commitment',

@@ -1,11 +1,11 @@
 ---
-import { pad, type PillarPage } from '../../content/what-we-do';
+import { pad, type OverviewContent } from '../../content/what-we-do';
 
 interface Props {
-  pillar: PillarPage;
+  overview: OverviewContent;
 }
 
-const { overview } = Astro.props.pillar;
+const { overview } = Astro.props;
 ---
 
 <section class="section" id="overview" data-overview>

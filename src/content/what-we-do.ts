@@ -45,6 +45,17 @@ export interface SectionIntro {
   intro: string;
 }
 
+/* The overview every expansion page opens with (PillarOverview): the
+   mission point it expands, quoted verbatim, the page's reading of it, and
+   a short list under its own label. */
+export interface OverviewContent {
+  label: string;
+  mission: MissionPoint;
+  body: string[];
+  scopeLabel: string;
+  scope: string[];
+}
+
 export interface PillarPage extends Pillar {
   slug: string;
   href: string;
@@ -52,14 +63,7 @@ export interface PillarPage extends Pillar {
   index: number;
   /* Hero subline - the pillar's promise in one sentence. */
   standfirst: string;
-  overview: {
-    label: string;
-    /* The mission point this pillar expands, quoted verbatim. */
-    mission: MissionPoint;
-    body: string[];
-    scopeLabel: string;
-    scope: string[];
-  };
+  overview: OverviewContent;
   capabilities: SectionIntro & { items: Capability[] };
   process: SectionIntro & { steps: ProcessStep[] };
   cta: {

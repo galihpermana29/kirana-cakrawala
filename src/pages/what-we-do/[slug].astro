@@ -51,7 +51,7 @@ const next = nextPillar(pillar);
     secondary={{ label: whatWeDoLabels.allCapabilities, href: WHAT_WE_DO_PATH }}
   />
   <PillarSwitcher current={pillar.id} />
-  <PillarOverview pillar={pillar} />
+  <PillarOverview overview={pillar.overview} />
   <PillarCapabilities pillar={pillar} />
   <PillarProcess pillar={pillar} />
   <PillarGrid head={otherPillarsGrid} items={otherPillars(pillar)} />

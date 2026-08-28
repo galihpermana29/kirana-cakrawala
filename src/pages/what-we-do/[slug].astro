@@ -1,0 +1,66 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import PillarCapabilities from '../../components/what-we-do/PillarCapabilities.astro';
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
+import PillarHero from '../../components/what-we-do/PillarHero.astro';
+import PillarOverview from '../../components/what-we-do/PillarOverview.astro';
+import PillarProcess from '../../components/what-we-do/PillarProcess.astro';
+import PillarSwitcher from '../../components/what-we-do/PillarSwitcher.astro';
+import { home } from '../../content/home';
+import {
+  contactLink,
+  ctaImage,
+  nextPillar,
+  otherPillars,
+  otherPillarsGrid,
+  pad,
+  pillarPages,
+  whatWeDoIndex,
+  whatWeDoLabels,
+  WHAT_WE_DO_PATH,
+} from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// One template, four content instances - the pillar pages.
+export const getStaticPaths = (() =>
+  pillarPages.map((pillar) => ({
+    params: { slug: pillar.slug },
+    props: { pillar },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { pillar } = Astro.props;
+const next = nextPillar(pillar);
+---
+
+<HomeLayout
+  title={`${pillar.name} - ${home.companyName}`}
+  description={pillar.standfirst}
+>
+  <PillarHero
+    crumb={whatWeDoIndex.title}
+    crumbHref={WHAT_WE_DO_PATH}
+    eyebrow={`${pad(pillar.index)} of ${pad(pillarPages.length)}`}
+    heading={pillar.name}
+    standfirst={pillar.standfirst}
+    image={pillar.image}
+    index={pad(pillar.index)}
+    primary={contactLink}
+    secondary={{ label: whatWeDoLabels.allCapabilities, href: WHAT_WE_DO_PATH }}
+  />
+  <PillarSwitcher current={pillar.id} />
+  <PillarOverview overview={pillar.overview} />
+  <PillarCapabilities pillar={pillar} />
+  <PillarProcess pillar={pillar} />
+  <PillarGrid head={otherPillarsGrid} items={otherPillars(pillar)} />
+  <PillarCta
+    label={whatWeDoLabels.nextStep}
+    heading={pillar.cta.heading}
+    body={pillar.cta.body}
+    primary={contactLink}
+    secondary={{ label: `${whatWeDoLabels.next} ${next.name}`, href: next.href }}
+    image={ctaImage}
+  />
+</HomeLayout>

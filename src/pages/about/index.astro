@@ -1,0 +1,46 @@
+---
+import AboutGovernance from '../../components/about/AboutGovernance.astro';
+import AboutIntro from '../../components/about/AboutIntro.astro';
+import AboutMission from '../../components/about/AboutMission.astro';
+import AboutVision from '../../components/about/AboutVision.astro';
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
+import PillarHero from '../../components/what-we-do/PillarHero.astro';
+import { aboutLabels, aboutPage, MISSION_ANCHOR } from '../../content/about';
+import { home } from '../../content/home';
+import { ctaImage, pillarPages, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// The About Us page: the home of the full positioning - who KCA is, the
+// vision, all seven mission points, and the quality, safety, and governance
+// standard behind them. Opens and closes like every inner page and links
+// out through the four pillars, the Partners page, and Contact.
+---
+
+<HomeLayout
+  title={`${aboutPage.title} - ${home.companyName}`}
+  description={aboutPage.standfirst}
+>
+  <PillarHero
+    crumb={home.brandAbbr}
+    eyebrow={aboutPage.title}
+    heading={aboutPage.heading}
+    standfirst={aboutPage.standfirst}
+    image={aboutPage.image}
+    primary={{ label: aboutLabels.ourMission, href: `#${MISSION_ANCHOR}` }}
+    secondary={{ label: home.whatWeDo.label, href: WHAT_WE_DO_PATH }}
+  />
+  <AboutIntro content={aboutPage.intro} />
+  <AboutVision content={aboutPage.vision} />
+  <AboutMission content={aboutPage.mission} />
+  <AboutGovernance content={aboutPage.governance} />
+  <PillarGrid head={aboutPage.pillars} items={pillarPages} />
+  <PillarCta
+    label={aboutPage.cta.label}
+    heading={aboutPage.cta.heading}
+    body={aboutPage.cta.body}
+    primary={aboutPage.cta.primary}
+    secondary={aboutPage.cta.secondary}
+    image={ctaImage}
+  />
+</HomeLayout>

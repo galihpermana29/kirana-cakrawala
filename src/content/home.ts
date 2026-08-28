@@ -26,10 +26,15 @@ export interface WhoWeAreContent {
   /* Scroll-lit word by word. */
   statement: string;
   body: string;
+  /* Into the About Us page, where the full positioning lives. */
+  link: NavItem;
 }
 
+export type PillarId = 'parts' | 'mro' | 'technical' | 'network';
+
 export interface Pillar {
-  id: string;
+  /* Also the key each pillar page is looked up by (src/content/what-we-do.ts). */
+  id: PillarId;
   name: string;
   description: string;
   image: SourcedImage;
@@ -48,16 +53,36 @@ export interface NetworkNode {
   yPct: number;
 }
 
-export interface NewsItem {
-  date: string;
-  title: string;
-  excerpt: string;
+export type PartnerCategoryId =
+  | 'oems'
+  | 'airlines'
+  | 'mros'
+  | 'lessors'
+  | 'operators'
+  | 'financial-institutions'
+  | 'aviation-investors';
+
+/* A partner category as the homepage marquee shows it; the Partners page
+   expands each one (src/content/partners.ts), keyed by id. */
+export interface PartnerCategorySummary {
+  id: PartnerCategoryId;
+  name: string;
 }
 
 export interface ContactContent {
   address: string;
   email: string;
   phone: string;
+}
+
+/* tel: link from the printed number - digits only. Shared by the footer and
+   the Contact page so the two can never dial differently. */
+export function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
+export function mailHref(email: string): string {
+  return `mailto:${email}`;
 }
 
 export interface HomeContent {
@@ -77,10 +102,15 @@ export interface HomeContent {
     label: string;
     heading: string;
     intro: string;
-    /* Partner categories cycled in the marquee - no invented company names. */
-    categories: string[];
+    /* Partner categories cycled in the marquee - no invented company names.
+       Each links into its tab on the Partners page. */
+    categories: PartnerCategorySummary[];
     /* Neutral nodes visualizing the global supply network on the dotted map. */
     network: NetworkNode[];
+    /* The map's anchor pin - the only location the site names. */
+    hq: NetworkNode;
+    /* Into the Partners page. */
+    link: NavItem;
   };
   commitment: {
     label: string;
@@ -90,11 +120,12 @@ export interface HomeContent {
     /* Sits under a heavy navy overlay behind the band's copy. */
     image: SourcedImage;
   };
+  /* The teaser's head only - its cards are the newest articles in
+     src/content/news.ts, so the homepage and /news never drift. */
   news: {
     label: string;
     heading: string;
     intro: string;
-    items: NewsItem[];
     showAll: NavItem;
   };
   contact: ContactContent;
@@ -104,12 +135,14 @@ export const home: HomeContent = {
   companyName: 'Kirana Cakrawala',
   brandAbbr: 'KCA',
   tagline: 'Your Integrated Aviation Aftermarket Partner',
+  // Every entry is a real route now; hrefs stay absolute so the shared
+  // header and footer resolve from inner pages too.
   nav: [
-    { label: 'About Us', href: '#about' },
-    { label: 'What We Do', href: '#pillars' },
-    { label: 'Partners', href: '#ecosystem' },
-    { label: 'News & Articles', href: '#news' },
-    { label: 'Contact Us', href: '#contact' },
+    { label: 'About Us', href: '/about' },
+    { label: 'What We Do', href: '/what-we-do' },
+    { label: 'Partners', href: '/partners' },
+    { label: 'News & Articles', href: '/news' },
+    { label: 'Contact Us', href: '/contact' },
   ],
   hero: {
     eyebrow: 'AOG support, 24/7 - Jakarta HQ',
@@ -117,7 +150,7 @@ export const home: HomeContent = {
     subline:
       'Connecting Parts, MRO, Technical Expertise & Global Supply Networks.',
     ctaPrimary: { label: 'Explore Our Capabilities', href: '#pillars' },
-    ctaSecondary: { label: 'About Us', href: '#about' },
+    ctaSecondary: { label: 'About Us', href: '/about' },
     image: {
       src: '/images/galih-2.jpg',
       alt: 'Fighter jet banking away with afterburners lit against a blue sky',
@@ -135,6 +168,7 @@ export const home: HomeContent = {
       'KCA is your integrated aviation aftermarket partner, connecting ' +
       'parts, MRO, technical expertise, and global supply networks for ' +
       'airlines, operators, MROs, and aviation organizations.',
+    link: { label: 'More About KCA', href: '/about' },
   },
   whatWeDo: {
     label: 'What We Do',
@@ -167,9 +201,8 @@ export const home: HomeContent = {
           'economic value of aviation assets.',
         image: {
           src: '/images/pillar-mro.jpg',
-          alt: 'Technician performing maintenance on an aircraft engine',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Abraham_Lincoln_Conducts_Aircraft_Maintenance_(9664557).jpg',
+          alt: 'Turbofan engine on a stand in a maintenance hangar',
+          sourceUrl: 'https://unsplash.com/photos/fkcjWXPRAZU',
         },
       },
       {
@@ -181,9 +214,8 @@ export const home: HomeContent = {
           'availability and operational readiness.',
         image: {
           src: '/images/pillar-technical.jpg',
-          alt: 'Engineers working on an aircraft on the flight line',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Avionics_Technician_Maintains_Aircraft_Systems_(9870935).jpg',
+          alt: 'Technician in a hi-vis vest inspecting the underside of an airliner wing',
+          sourceUrl: 'https://unsplash.com/photos/7OgQ-Ze7BXQ',
         },
       },
       {
@@ -195,9 +227,8 @@ export const home: HomeContent = {
           'sourcing.',
         image: {
           src: '/images/pillar-network.jpg',
-          alt: 'Cargo aircraft being loaded with air freight',
-          sourceUrl:
-            'https://commons.wikimedia.org/wiki/File:Evergreen_B747F_-_Cargo-In-Cargo-Out_DVIDS171689.jpg',
+          alt: 'Open cargo hold of a freighter aircraft with netted air freight pallets',
+          sourceUrl: 'https://unsplash.com/photos/D1H7jEwlWMU',
         },
       },
     ],
@@ -210,13 +241,13 @@ export const home: HomeContent = {
       'operators, financial institutions, and aviation investors - an ' +
       'integrated and scalable aviation aftermarket ecosystem.',
     categories: [
-      'OEMs',
-      'Airlines',
-      'MROs',
-      'Lessors',
-      'Operators',
-      'Financial Institutions',
-      'Aviation Investors',
+      { id: 'oems', name: 'OEMs' },
+      { id: 'airlines', name: 'Airlines' },
+      { id: 'mros', name: 'MROs' },
+      { id: 'lessors', name: 'Lessors' },
+      { id: 'operators', name: 'Operators' },
+      { id: 'financial-institutions', name: 'Financial Institutions' },
+      { id: 'aviation-investors', name: 'Aviation Investors' },
     ],
     network: [
       { name: 'Americas', xPct: 15, yPct: 38 },
@@ -224,12 +255,14 @@ export const home: HomeContent = {
       { name: 'Middle East', xPct: 60, yPct: 45 },
       { name: 'East Asia', xPct: 82, yPct: 40 },
     ],
+    hq: { name: 'Jakarta HQ', xPct: 79, yPct: 57 },
+    link: { label: 'Explore the Ecosystem', href: '/partners' },
   },
   commitment: {
     label: 'Our Commitment',
     heading: 'Right Part. Right Solution. Right Time.',
     body: 'Keeping Aviation Moving.',
-    cta: { label: 'Contact Us', href: '#contact' },
+    cta: { label: 'Contact Us', href: '/contact' },
     image: {
       src: '/images/commitment-wing.jpg',
       alt: 'Aircraft wing over evening clouds at altitude',
@@ -243,30 +276,7 @@ export const home: HomeContent = {
     intro:
       'Developments in aviation aftermarket capability, company ' +
       'milestones, and industry insights.',
-    items: [
-      {
-        date: '26.08.10',
-        title: 'Building Component MRO Capability',
-        excerpt:
-          'How repair, overhaul, and refurbishment extend component life ' +
-          'and maximize asset value.',
-      },
-      {
-        date: '26.08.03',
-        title: 'Optimizing AOG Response Across Asia',
-        excerpt:
-          'Sourcing the right part with the right lead time - keeping ' +
-          'aircraft available and operations ready.',
-      },
-      {
-        date: '26.07.28',
-        title: 'The Integrated Aftermarket Ecosystem',
-        excerpt:
-          'Why connecting OEMs, MROs, lessors, and operators creates value ' +
-          'across every transaction.',
-      },
-    ],
-    showAll: { label: 'Show All Articles', href: '#news' },
+    showAll: { label: 'Show All Articles', href: '/news' },
   },
   contact: {
     address:

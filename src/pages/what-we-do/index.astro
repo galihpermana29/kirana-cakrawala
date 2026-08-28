@@ -1,0 +1,43 @@
+---
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
+import PillarHero from '../../components/what-we-do/PillarHero.astro';
+import { home } from '../../content/home';
+import {
+  aboutLink,
+  contactLink,
+  ctaImage,
+  pillarPages,
+  whatWeDoIndex,
+  whatWeDoLabels,
+} from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// The What We Do hub: the nav's landing point and the directory of the four
+// pillar pages.
+const first = pillarPages[0]!;
+---
+
+<HomeLayout
+  title={`${whatWeDoIndex.title} - ${home.companyName}`}
+  description={whatWeDoIndex.standfirst}
+>
+  <PillarHero
+    crumb={home.brandAbbr}
+    eyebrow={whatWeDoIndex.title}
+    heading={whatWeDoIndex.heading}
+    standfirst={whatWeDoIndex.standfirst}
+    image={whatWeDoIndex.image}
+    primary={{ label: `${whatWeDoLabels.startWith} ${first.name}`, href: first.href }}
+    secondary={contactLink}
+  />
+  <PillarGrid head={whatWeDoIndex.grid} items={pillarPages} />
+  <PillarCta
+    label={whatWeDoIndex.cta.label}
+    heading={whatWeDoIndex.cta.heading}
+    body={whatWeDoIndex.cta.body}
+    primary={contactLink}
+    secondary={aboutLink}
+    image={ctaImage}
+  />
+</HomeLayout>

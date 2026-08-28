@@ -1,0 +1,849 @@
+---
+import { home } from '../../content/home';
+import {
+  contactLabels,
+  inquiryForm,
+  INQUIRY_ANCHOR,
+  mailHref,
+  pad,
+  type InquiryContent,
+} from '../../content/contact';
+
+interface Props {
+  content: InquiryContent;
+  /* PUBLIC_WEB3FORMS_KEY; empty means the form is not connected yet. */
+  accessKey: string;
+}
+
+const { content, accessKey } = Astro.props;
+const connected = accessKey.length > 0;
+const fieldId = (name: string) => `inquiry-${name}`;
+const errorId = (name: string) => `inquiry-${name}-error`;
+const { sent, failed, notConnected } = contactLabels;
+---
+
+<!-- The inquiry form beside what happens after it is sent. Without JS the
+     form posts to Web3Forms directly and lands on its confirmation page; with
+     JS it submits in place and the sent panel takes the form's cell. -->
+<section class="section inquiry" id={INQUIRY_ANCHOR} data-inquiry>
+  <div class="container">
+    <p class="section-label" data-inquiry-label>{content.label}</p>
+    <div class="section-head">
+      <h2>{content.heading}</h2>
+      <p class="section-intro">{content.intro}</p>
+    </div>
+
+    <div class="inquiry-grid">
+      <div class="inquiry-stage" data-inquiry-stage>
+        <form
+          class="inquiry-form"
+          method="post"
+          action={inquiryForm.endpoint}
+          data-inquiry-form
+          data-subject={inquiryForm.subject}
+          data-error-required={contactLabels.errors.required}
+          data-error-email={contactLabels.errors.email}
+        >
+          <input type="hidden" name="access_key" value={accessKey} />
+          <input type="hidden" name="subject" value={inquiryForm.subject} />
+          <input type="hidden" name="from_name" value={inquiryForm.fromName} />
+          <!-- Web3Forms honeypot: a checkbox no visitor sees; a bot that ticks
+               it is dropped server-side. -->
+          <input
+            type="checkbox"
+            name="botcheck"
+            class="botcheck"
+            tabindex="-1"
+            autocomplete="off"
+            aria-hidden="true"
+            style="display: none;"
+          />
+
+          {
+            !connected && (
+              <div class="form-notice" role="status" data-inquiry-notice>
+                <p class="notice-heading">{notConnected.heading}</p>
+                <p class="notice-body">
+                  {notConnected.body}{' '}
+                  <a href={mailHref(home.contact.email)}>{home.contact.email}</a>.
+                </p>
+              </div>
+            )
+          }
+
+          <div class="form-fields">
+            {
+              content.fields.map((field) => (
+                <div class:list={['field', `field-${field.span}`]} data-inquiry-field>
+                  <label class="field-label" for={fieldId(field.name)}>
+                    <span>{field.label}</span>
+                    {!field.required && <span class="field-flag">{contactLabels.optional}</span>}
+                  </label>
+                  {field.kind === 'textarea' ? (
+                    <textarea
+                      id={fieldId(field.name)}
+                      name={field.name}
+                      rows={6}
+                      required={field.required}
+                      placeholder={field.placeholder}
+                      aria-describedby={errorId(field.name)}
+                    />
+                  ) : field.kind === 'select' ? (
+                    <div class="select-wrap">
+                      <select
+                        id={fieldId(field.name)}
+                        name={field.name}
+                        required={field.required}
+                        aria-describedby={errorId(field.name)}
+                      >
+                        <option value="" selected disabled>
+                          {contactLabels.selectPrompt}
+                        </option>
+                        {field.options?.map((option) => (
+                          <option value={option}>{option}</option>
+                        ))}
+                      </select>
+                      <span class="select-chevron" aria-hidden="true">
+                        ›
+                      </span>
+                    </div>
+                  ) : (
+                    <input
+                      id={fieldId(field.name)}
+                      name={field.name}
+                      type={field.kind}
+                      required={field.required}
+                      autocomplete={field.autocomplete}
+                      placeholder={field.placeholder}
+                      inputmode={field.kind === 'tel' ? 'tel' : undefined}
+                      aria-describedby={errorId(field.name)}
+                    />
+                  )}
+                  <p class="field-error" id={errorId(field.name)} data-inquiry-error></p>
+                </div>
+              ))
+            }
+          </div>
+
+          <div class="form-foot">
+            <button
+              class="btn btn-primary"
+              type="submit"
+              disabled={!connected}
+              data-inquiry-submit
+              data-label={contactLabels.submit}
+              data-sending={contactLabels.sending}
+            >
+              <span data-inquiry-submit-label>{contactLabels.submit}</span>
+              <span class="btn-arrow" aria-hidden="true">›</span>
+            </button>
+            <div class="form-result" role="alert" data-inquiry-result>
+              <p class="result-heading">{failed.heading}</p>
+              <p class="result-body">
+                <span data-inquiry-result-message></span>
+                {failed.body}{' '}
+                <a href={mailHref(home.contact.email)}>{home.contact.email}</a>.
+              </p>
+            </div>
+          </div>
+        </form>
+
+        <div class="form-sent" data-inquiry-sent>
+          <p class="sent-label">{sent.label}</p>
+          <h3 class="sent-heading" tabindex="-1" data-inquiry-sent-heading>{sent.heading}</h3>
+          <p class="sent-body">
+            {sent.body} <strong data-inquiry-sent-email></strong>.
+          </p>
+          <button class="btn btn-ghost" type="button" data-inquiry-again>
+            {sent.again}<span class="btn-arrow" aria-hidden="true">›</span>
+          </button>
+        </div>
+      </div>
+
+      <aside class="inquiry-aside" data-inquiry-aside>
+        <div class="aside-block">
+          <p class="aside-label">{content.nextSteps.label}</p>
+          <ol class="step-list">
+            {
+              content.nextSteps.steps.map((step, i) => (
+                <li class="step">
+                  <span class="step-index" aria-hidden="true">{pad(i + 1)}</span>
+                  <div class="step-copy">
+                    <p class="step-title">{step.title}</p>
+                    <p class="step-description">{step.description}</p>
+                  </div>
+                </li>
+              ))
+            }
+          </ol>
+        </div>
+        <div class="aside-block">
+          <p class="aside-label">{content.routes.label}</p>
+          <div class="route-links">
+            {
+              content.routes.items.map((route) => (
+                <a class="route-link" href={route.href}>
+                  {route.label}<span class="btn-arrow" aria-hidden="true">›</span>
+                </a>
+              ))
+            }
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    gsap,
+    motionReady,
+    revealUp,
+    scrambleIn,
+    ScrollTrigger,
+    EASE,
+  } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-inquiry]');
+  const label = document.querySelector('[data-inquiry-label]');
+  const stage = section?.querySelector<HTMLElement>('[data-inquiry-stage]');
+  const form = section?.querySelector<HTMLFormElement>('[data-inquiry-form]');
+  const submit = section?.querySelector<HTMLButtonElement>('[data-inquiry-submit]');
+  const submitLabel = section?.querySelector<HTMLElement>('[data-inquiry-submit-label]');
+  const result = section?.querySelector<HTMLElement>('[data-inquiry-result]');
+  const resultMessage = section?.querySelector<HTMLElement>('[data-inquiry-result-message]');
+  const sentPanel = section?.querySelector<HTMLElement>('[data-inquiry-sent]');
+  const sentHeading = section?.querySelector<HTMLElement>('[data-inquiry-sent-heading]');
+  const sentEmail = section?.querySelector<HTMLElement>('[data-inquiry-sent-email]');
+  const again = section?.querySelector<HTMLButtonElement>('[data-inquiry-again]');
+  const aside = section?.querySelector<HTMLElement>('[data-inquiry-aside]');
+
+  type Control = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+
+  // Sending and validation are state, not motion: they run for every
+  // visitor. Only the sent panel's settle-in is registered through motionReady;
+  // it calls `done` once the panel is visible so focus can land on it.
+  let animateSent: ((panel: HTMLElement, done: () => void) => void) | undefined;
+
+  const controls = (): Control[] =>
+    Array.from(form?.querySelectorAll<Control>('[data-inquiry-field] [name]') ?? []);
+
+  const errorFor = (control: Control) =>
+    control.closest('[data-inquiry-field]')?.querySelector<HTMLElement>('[data-inquiry-error]');
+
+  // Field errors come from the content module by way of the DOM: the form
+  // carries its copy in data attributes so this script stays copy-free.
+  const messages = {
+    required: form?.dataset.errorRequired ?? '',
+    email: form?.dataset.errorEmail ?? '',
+  };
+
+  function setError(control: Control, message: string) {
+    const error = errorFor(control);
+    control.setAttribute('aria-invalid', message ? 'true' : 'false');
+    if (error) error.textContent = message;
+  }
+
+  function validate(control: Control): boolean {
+    if (control.validity.valid) {
+      setError(control, '');
+      return true;
+    }
+    setError(control, control.validity.valueMissing ? messages.required : messages.email);
+    return false;
+  }
+
+  function setSending(on: boolean) {
+    if (!submit || !submitLabel) return;
+    submit.disabled = on;
+    submit.setAttribute('aria-busy', String(on));
+    submit.classList.toggle('is-sending', on);
+    submitLabel.textContent = on
+      ? (submit.dataset.sending ?? '')
+      : (submit.dataset.label ?? '');
+  }
+
+  function showResult(message: string) {
+    if (!result || !resultMessage) return;
+    resultMessage.textContent = message ? `${message} ` : '';
+    result.classList.add('show');
+    // The result box just opened below the button - triggers beneath it
+    // (the office and CTA entrances) sit at new scroll positions.
+    ScrollTrigger.refresh();
+  }
+
+  function hideResult() {
+    result?.classList.remove('show');
+  }
+
+  // Screen readers and keyboards land on the confirmation, not on a form
+  // that just vanished.
+  function focusSent() {
+    sentHeading?.focus({ preventScroll: true });
+  }
+
+  function showSent(email: string) {
+    if (!stage || !sentPanel || !sentEmail) return;
+    sentEmail.textContent = email;
+    stage.classList.add('is-sent');
+    if (animateSent) animateSent(sentPanel, focusSent);
+    else focusSent();
+    ScrollTrigger.refresh();
+  }
+
+  async function send(event: SubmitEvent) {
+    event.preventDefault();
+    if (!form || !submit || submit.disabled) return;
+    hideResult();
+
+    const fields = controls();
+    const invalid = fields.filter((control) => !validate(control));
+    if (invalid.length) {
+      invalid[0]?.focus();
+      return;
+    }
+
+    const data = Object.fromEntries(new FormData(form).entries()) as Record<string, string>;
+    // Subject reads "KCA website inquiry - Component MRO - Acme Air" so the
+    // mailbox sorts itself.
+    data.subject = [form.dataset.subject, data.inquiry_type, data.company]
+      .filter(Boolean)
+      .join(' - ');
+
+    setSending(true);
+    try {
+      const response = await fetch(form.action, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = (await response.json().catch(() => ({}))) as {
+        success?: boolean;
+        message?: string;
+      };
+      if (response.ok && json.success) {
+        form.reset();
+        fields.forEach((control) => setError(control, ''));
+        showSent(data.email ?? '');
+      } else {
+        showResult(json.message ?? '');
+      }
+    } catch {
+      showResult('');
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (form && stage) {
+    // Native validation stays on for the no-JS path; with JS the form
+    // reports errors inline instead.
+    form.noValidate = true;
+    form.addEventListener('submit', send);
+    // Errors clear as soon as the field is corrected; a field that has been
+    // flagged re-validates as it is typed in.
+    controls().forEach((control) => {
+      control.addEventListener('input', () => {
+        if (control.getAttribute('aria-invalid') === 'true') validate(control);
+      });
+      control.addEventListener('blur', () => {
+        if (control.value) validate(control);
+      });
+    });
+    again?.addEventListener('click', () => {
+      stage.classList.remove('is-sent');
+      hideResult();
+      ScrollTrigger.refresh();
+      controls()[0]?.focus({ preventScroll: true });
+    });
+  }
+
+  if (section && label && stage) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-inquiry] .section-head > *', { trigger: section, stagger: 0.09 });
+      revealUp('[data-inquiry-notice], [data-inquiry-field], [data-inquiry] .form-foot', {
+        trigger: stage,
+        stagger: 0.05,
+        y: 18,
+        duration: 0.6,
+      });
+      if (aside) {
+        revealUp(aside.children, { trigger: aside, delay: 0.15, stagger: 0.1, y: 24 });
+      }
+      animateSent = (panel, done) => {
+        gsap.fromTo(
+          panel.children,
+          { autoAlpha: 0, y: 14 },
+          {
+            autoAlpha: 1,
+            y: 0,
+            duration: 0.36,
+            ease: EASE,
+            stagger: 0.06,
+            delay: 0.1,
+            overwrite: true,
+            onComplete: done,
+          },
+        );
+      };
+      return () => {
+        animateSent = undefined;
+      };
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .inquiry {
+    background: var(--surface);
+  }
+
+  .inquiry-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  /* Form and sent panel share one cell, so the column keeps the form's
+     height and nothing below it jumps when the state changes. */
+  .inquiry-stage {
+    display: grid;
+  }
+
+  .inquiry-form,
+  .form-sent {
+    grid-area: 1 / 1;
+    transition:
+      opacity 240ms var(--ease-out-quad),
+      transform 300ms var(--ease-out-expo),
+      visibility 0s linear;
+  }
+
+  .form-sent {
+    align-self: start;
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none;
+    transition-delay: 0s, 0s, 240ms;
+  }
+
+  .is-sent .inquiry-form {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+    transition-delay: 0s, 0s, 240ms;
+  }
+
+  /* Visibility flips at once so the panel can take focus; the fade follows. */
+  .is-sent .form-sent {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+    transition-delay: 60ms, 60ms, 0s;
+  }
+
+  .inquiry-form {
+    display: grid;
+    gap: 1.6rem;
+  }
+
+  /* Visible stand-in while PUBLIC_WEB3FORMS_KEY is empty. */
+  .form-notice {
+    border: 1px solid rgba(249, 156, 36, 0.55);
+    border-left: 3px solid var(--orange);
+    border-radius: 0.5rem;
+    background: rgba(249, 156, 36, 0.08);
+    padding: 1rem 1.25rem;
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .notice-heading,
+  .result-heading,
+  .sent-label,
+  .aside-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  .notice-body,
+  .result-body {
+    font-size: 0.93rem;
+    color: var(--slate);
+  }
+
+  .form-fields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+  }
+
+  .field {
+    display: grid;
+    gap: 0.5rem;
+    align-content: start;
+  }
+
+  .field-full {
+    grid-column: 1 / -1;
+  }
+
+  .field-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  .field-flag {
+    font-weight: 400;
+    color: var(--slate);
+    letter-spacing: 0.1em;
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    line-height: 1.5;
+    color: var(--navy);
+    background: var(--bg);
+    border: 1px solid rgba(1, 30, 65, 0.22);
+    border-radius: 0.5rem;
+    padding: 0.85rem 1rem;
+    appearance: none;
+    transition:
+      border-color 150ms ease,
+      box-shadow 200ms var(--ease-out-expo);
+  }
+
+  .field textarea {
+    min-height: 9.5rem;
+    resize: vertical;
+  }
+
+  .field ::placeholder {
+    color: rgba(103, 120, 141, 0.7);
+  }
+
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .field textarea:focus-visible {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(0, 130, 202, 0.18);
+  }
+
+  .field [aria-invalid='true'] {
+    border-color: var(--danger);
+  }
+
+  .field [aria-invalid='true']:focus-visible {
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 16%, transparent);
+  }
+
+  .select-wrap {
+    position: relative;
+  }
+
+  .select-wrap select {
+    padding-right: 2.75rem;
+    cursor: pointer;
+  }
+
+  .select-wrap select:invalid {
+    color: rgba(103, 120, 141, 0.7);
+  }
+
+  .select-wrap select option {
+    color: var(--navy);
+  }
+
+  /* The chevron every button carries, turned to point down. */
+  .select-chevron {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--orange);
+    transform: translateY(-55%) rotate(90deg);
+    pointer-events: none;
+    transition: transform 220ms var(--ease-out-expo);
+  }
+
+  .select-wrap:focus-within .select-chevron {
+    transform: translateY(-35%) rotate(90deg);
+  }
+
+  /* Empty by default; only takes space once a message lands in it. */
+  .field-error {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--danger);
+    min-height: 0;
+  }
+
+  .field-error:empty {
+    display: none;
+  }
+
+  .form-foot {
+    display: grid;
+    justify-items: start;
+    gap: 1rem;
+  }
+
+  /* Buttons size like the anchor buttons everywhere else. */
+  .inquiry button.btn {
+    line-height: inherit;
+    cursor: pointer;
+  }
+
+  /* The not-connected button is inert: no hover lift, no chevron lead. */
+  .form-foot .btn:disabled,
+  .form-foot .btn:disabled:hover {
+    cursor: not-allowed;
+    opacity: 0.55;
+    background: var(--navy);
+    box-shadow: none;
+  }
+
+  .form-foot .btn:disabled .btn-arrow {
+    color: var(--orange);
+    transform: none;
+  }
+
+  .form-foot .btn.is-sending {
+    opacity: 0.8;
+  }
+
+  .form-foot .btn.is-sending .btn-arrow {
+    opacity: 0;
+  }
+
+  /* Out of the flow until there is something to say; settles in when shown. */
+  .form-result {
+    display: none;
+    gap: 0.3rem;
+    border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+    border-left: 3px solid var(--danger);
+    border-radius: 0.5rem;
+    background: color-mix(in srgb, var(--danger) 5%, transparent);
+    padding: 1rem 1.25rem;
+    transition:
+      opacity 220ms var(--ease-out-quad),
+      transform 260ms var(--ease-out-expo);
+  }
+
+  .form-result.show {
+    display: grid;
+  }
+
+  @starting-style {
+    .form-result.show {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+  }
+
+  .form-sent {
+    display: grid;
+    justify-items: start;
+    gap: 1rem;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--orange);
+    border-radius: 0.75rem;
+    background: var(--bg);
+    padding: clamp(1.75rem, 3vw, 2.5rem);
+  }
+
+  .sent-label {
+    color: var(--orange);
+  }
+
+  .sent-label::before {
+    content: '/ ';
+  }
+
+  .sent-heading {
+    font-size: clamp(1.3rem, 2vw, 1.7rem);
+  }
+
+  .sent-heading:focus-visible {
+    outline: none;
+  }
+
+  .sent-body {
+    color: var(--slate);
+    max-width: 34rem;
+  }
+
+  .sent-body strong {
+    color: var(--navy);
+    font-weight: 600;
+  }
+
+  .inquiry-aside {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .aside-block {
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--bg);
+    padding: 1.5rem 1.75rem 1.5rem;
+  }
+
+  .aside-label {
+    margin-bottom: 0.6rem;
+  }
+
+  .step-list {
+    list-style: none;
+  }
+
+  .step {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.9rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .step:last-child {
+    padding-bottom: 0.25rem;
+  }
+
+  .step-index {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--orange);
+  }
+
+  .step-copy {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .step-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  .step-description {
+    font-size: 0.88rem;
+    color: var(--slate);
+  }
+
+  .route-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding-top: 0.5rem;
+  }
+
+  /* Links out to the pillar and partner pages, in the filter pill's clothing. */
+  .route-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--navy);
+    text-decoration: none;
+    border: 1px solid rgba(1, 30, 65, 0.22);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .route-link .btn-arrow {
+    color: var(--orange);
+  }
+
+  .route-link:active {
+    transform: scale(0.95);
+  }
+
+  .route-link:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .field input:hover:not(:focus-visible),
+    .field select:hover:not(:focus-visible),
+    .field textarea:hover:not(:focus-visible) {
+      border-color: rgba(1, 30, 65, 0.45);
+    }
+
+    .route-link:hover {
+      border-color: var(--navy);
+      background: rgba(1, 30, 65, 0.05);
+    }
+
+    .route-link:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .inquiry-form,
+    .form-sent,
+    .form-result,
+    .select-chevron {
+      transition: none;
+    }
+
+    .route-link,
+    .route-link:active {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 1023.98px) {
+    .inquiry-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+
+  @media (max-width: 639.98px) {
+    .form-fields {
+      grid-template-columns: 1fr;
+    }
+
+    .field-half {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

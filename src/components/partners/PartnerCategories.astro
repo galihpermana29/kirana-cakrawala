@@ -1,0 +1,616 @@
+---
+import {
+  categoryPillars,
+  ECOSYSTEM_ANCHOR,
+  pad,
+  partnersLabels,
+  type PartnerCategory,
+} from '../../content/partners';
+import type { SectionIntro } from '../../content/what-we-do';
+
+interface Props {
+  head: SectionIntro;
+  items: PartnerCategory[];
+}
+
+const { head, items } = Astro.props;
+const tabId = (category: PartnerCategory) => `tab-${category.id}`;
+---
+
+<!-- Seven categories, one reading position: an index of tabs beside the
+     open category's panel. Every panel ships in the page - the tabs only
+     choose which one is showing - and each is deep-linkable as #<id>.
+     Without JS the panels simply stack. -->
+<section class="band-navy section ecosystem" id={ECOSYSTEM_ANCHOR} data-ecosystem>
+  <div class="container">
+    <p class="section-label" data-ecosystem-label>{head.label}</p>
+    <div class="section-head">
+      <h2>{head.heading}</h2>
+      <p class="section-intro">{head.intro}</p>
+    </div>
+
+    <div class="ecosystem-stage" data-ecosystem-stage>
+      <div
+        class="ecosystem-tabs"
+        role="tablist"
+        aria-label={partnersLabels.categoriesNav}
+        data-ecosystem-tabs
+      >
+        <span class="tab-indicator" aria-hidden="true" data-ecosystem-indicator></span>
+        {
+          items.map((category, i) => (
+            <button
+              type="button"
+              class:list={['ecosystem-tab', { active: i === 0 }]}
+              role="tab"
+              id={tabId(category)}
+              aria-selected={i === 0 ? 'true' : 'false'}
+              aria-controls={category.id}
+              tabindex={i === 0 ? 0 : -1}
+              data-ecosystem-tab={category.id}
+            >
+              <span class="tab-index" aria-hidden="true">{pad(category.index)}</span>
+              <span class="tab-copy">
+                <span class="tab-name">{category.name}</span>
+                <span class="tab-role">{category.role}</span>
+              </span>
+              <span class="btn-arrow" aria-hidden="true">›</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="ecosystem-panels" data-ecosystem-panels>
+        {
+          items.map((category, i) => (
+            <article
+              class:list={['ecosystem-panel', { active: i === 0 }]}
+              id={category.id}
+              role="tabpanel"
+              aria-labelledby={tabId(category)}
+              data-ecosystem-panel={category.id}
+            >
+              <p class="panel-eyebrow">
+                <span class="panel-index">{pad(category.index)}</span>
+                <span>{partnersLabels.category}</span>
+              </p>
+              <h3 class="panel-name">{category.name}</h3>
+              <p class="panel-role">{category.role}</p>
+              <p class="panel-lead">{category.lead}</p>
+              <p class="panel-body">{category.body}</p>
+              <div class="panel-offers">
+                <p class="panel-label">{partnersLabels.whatWeBring}</p>
+                <ol class="offer-list">
+                  {category.offers.map((offer, n) => (
+                    <li>
+                      <span class="offer-index" aria-hidden="true">{pad(n + 1)}</span>
+                      {offer}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+              <div class="panel-pillars">
+                <p class="panel-label">{partnersLabels.connectedThrough}</p>
+                <div class="pillar-chips">
+                  {categoryPillars(category).map((pillar) => (
+                    <a class="pillar-chip" href={pillar.href}>
+                      {pillar.label}
+                      <span class="btn-arrow" aria-hidden="true">›</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REDUCED } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-ecosystem]');
+  const label = document.querySelector('[data-ecosystem-label]');
+  const stage = section?.querySelector<HTMLElement>('[data-ecosystem-stage]');
+  const tabList = section?.querySelector<HTMLElement>('[data-ecosystem-tabs]');
+  const indicator = section?.querySelector<HTMLElement>('[data-ecosystem-indicator]');
+  const tabs = Array.from(
+    section?.querySelectorAll<HTMLButtonElement>('[data-ecosystem-tab]') ?? [],
+  );
+  const panels = Array.from(
+    section?.querySelectorAll<HTMLElement>('[data-ecosystem-panel]') ?? [],
+  );
+
+  // Choosing a category is state, not motion: it runs for every visitor.
+  // Only the incoming panel's settle-in is registered through motionReady.
+  let animateSwitch: ((incoming: HTMLElement) => void) | undefined;
+
+  const activeTab = () => tabs.find((tab) => tab.classList.contains('active'));
+
+  // The orange rule slides to the open tab: translate and scale only, from a
+  // 100px base, so no layout property ever animates.
+  function placeIndicator() {
+    const tab = activeTab();
+    if (!indicator || !tab) return;
+    indicator.style.setProperty('--y', `${tab.offsetTop}px`);
+    indicator.style.setProperty('--s', String(tab.offsetHeight / 100));
+  }
+
+  // Phones: the tab row scrolls, so bring the chosen tab into view.
+  function revealTab(tab: HTMLElement) {
+    if (!tabList || tabList.scrollWidth <= tabList.clientWidth) return;
+    const left = tab.offsetLeft - (tabList.clientWidth - tab.offsetWidth) / 2;
+    const reduced = window.matchMedia(`(${REDUCED})`).matches;
+    tabList.scrollTo({ left, behavior: reduced ? 'auto' : 'smooth' });
+  }
+
+  function activate(id: string, { focus = false, hash = false } = {}) {
+    const incoming = panels.find((panel) => panel.dataset.ecosystemPanel === id);
+    if (!incoming) return;
+    const changed = !incoming.classList.contains('active');
+    tabs.forEach((tab) => {
+      const on = tab.dataset.ecosystemTab === id;
+      tab.classList.toggle('active', on);
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      if (on) {
+        if (focus) tab.focus({ preventScroll: true });
+        revealTab(tab);
+      }
+    });
+    panels.forEach((panel) => panel.classList.toggle('active', panel === incoming));
+    placeIndicator();
+    // The URL keeps the open category so the page can be shared or reloaded
+    // on it; replaceState never scrolls.
+    if (hash && changed) history.replaceState(null, '', `#${id}`);
+    if (changed) animateSwitch?.(incoming);
+  }
+
+  function activateFromHash() {
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    if (panels.some((panel) => panel.dataset.ecosystemPanel === id)) activate(id);
+  }
+
+  if (section && stage && tabList && tabs.length && panels.length) {
+    // JS is here: switch from stacked panels to the tabbed stage.
+    section.classList.add('tabbed');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        activate(tab.dataset.ecosystemTab ?? '', { hash: true });
+      });
+    });
+
+    // Arrow keys move and open; Home/End jump to the ends.
+    tabList.addEventListener('keydown', (event) => {
+      const current = tabs.indexOf(document.activeElement as HTMLButtonElement);
+      if (current < 0) return;
+      let next: number;
+      switch (event.key) {
+        case 'ArrowDown':
+        case 'ArrowRight':
+          next = (current + 1) % tabs.length;
+          break;
+        case 'ArrowUp':
+        case 'ArrowLeft':
+          next = (current - 1 + tabs.length) % tabs.length;
+          break;
+        case 'Home':
+          next = 0;
+          break;
+        case 'End':
+          next = tabs.length - 1;
+          break;
+        default:
+          return;
+      }
+      event.preventDefault();
+      activate(tabs[next]!.dataset.ecosystemTab ?? '', { focus: true, hash: true });
+    });
+
+    activateFromHash();
+    window.addEventListener('hashchange', activateFromHash);
+
+    // The tabs reflow with fonts and width; keep the rule on the open one.
+    placeIndicator();
+    document.fonts?.ready.then(placeIndicator);
+    new ResizeObserver(placeIndicator).observe(tabList);
+  }
+
+  if (section && label && stage) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-ecosystem] .section-head > *', { trigger: section, stagger: 0.09 });
+      revealUp('[data-ecosystem-tab]', {
+        trigger: stage,
+        stagger: 0.05,
+        y: 14,
+        duration: 0.5,
+      });
+      const open = panels.find((panel) => panel.classList.contains('active'));
+      if (open) {
+        revealUp(open.children, { trigger: stage, delay: 0.2, stagger: 0.05, y: 18, duration: 0.6 });
+      }
+      animateSwitch = (incoming) => {
+        // The new panel's rows settle in quickly, top to bottom; any
+        // entrance still running on them is superseded.
+        gsap.fromTo(
+          incoming.children,
+          { autoAlpha: 0, y: 12 },
+          { autoAlpha: 1, y: 0, duration: 0.32, ease: EASE, stagger: 0.04, overwrite: true },
+        );
+      };
+      return () => {
+        animateSwitch = undefined;
+      };
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  /* Default (no JS): the panels stack as cards and the tab index is gone. */
+  .ecosystem-tabs {
+    display: none;
+  }
+
+  .ecosystem-panels {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  /* Tabbed stage (added by JS): index beside the open panel. */
+  .tabbed .ecosystem-stage {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.35fr);
+    gap: clamp(2rem, 5vw, 4.5rem);
+    align-items: start;
+  }
+
+  .tabbed .ecosystem-tabs {
+    position: relative;
+    display: grid;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .tab-indicator {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 3px;
+    height: 100px;
+    background: var(--orange);
+    transform-origin: top left;
+    transform: translateY(var(--y, 0px)) scaleY(var(--s, 0));
+    transition: transform 280ms var(--ease-out-expo);
+    pointer-events: none;
+  }
+
+  .ecosystem-tab {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+    padding: 1.05rem 1rem 1.05rem 1.35rem;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+    color: rgba(255, 255, 255, 0.72);
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .ecosystem-tab:active {
+    transform: scale(0.985);
+  }
+
+  .ecosystem-tab:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: -2px;
+  }
+
+  .tab-index {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+  }
+
+  .tab-copy {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .tab-name {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 0.9rem;
+    color: #fff;
+  }
+
+  .tab-role {
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.55);
+    transition: color 160ms ease;
+  }
+
+  .ecosystem-tab .btn-arrow {
+    color: rgba(255, 255, 255, 0.35);
+    transition:
+      transform 220ms var(--ease-out-expo),
+      color 160ms ease;
+  }
+
+  .ecosystem-tab.active {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .ecosystem-tab.active .tab-role {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .ecosystem-tab.active .btn-arrow {
+    color: var(--orange);
+    transform: translateX(4px);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .ecosystem-tab:not(.active):hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .ecosystem-tab:not(.active):hover .btn-arrow {
+      color: #fff;
+      transform: translateX(4px);
+    }
+  }
+
+  /* All panels occupy one cell, so the stage keeps the height of the tallest
+     and nothing below it moves when the category changes. */
+  .tabbed .ecosystem-panels {
+    display: grid;
+    gap: 0;
+  }
+
+  .tabbed .ecosystem-panel {
+    grid-area: 1 / 1;
+  }
+
+  .tabbed .ecosystem-panel:not(.active) {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .ecosystem-panel {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: clamp(1.75rem, 3vw, 2.75rem);
+    display: grid;
+    align-content: start;
+    gap: 1.1rem;
+  }
+
+  .panel-eyebrow {
+    display: flex;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .panel-index {
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  .panel-index::after {
+    content: ' /';
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 400;
+  }
+
+  .panel-name {
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+  }
+
+  .panel-role {
+    margin-top: -0.5rem;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .panel-lead {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1rem, 1.5vw, 1.2rem);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+    color: #fff;
+    border-left: 2px solid var(--orange);
+    padding-left: 1rem;
+  }
+
+  .panel-body {
+    color: rgba(255, 255, 255, 0.72);
+  }
+
+  .panel-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  .offer-list {
+    list-style: none;
+  }
+
+  .offer-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.9rem;
+    padding-block: 0.7rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  .offer-index {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--orange);
+  }
+
+  .panel-pillars {
+    padding-top: 0.25rem;
+  }
+
+  .pillar-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  /* Links out to the pillar pages, in the homepage tab's clothing. */
+  .pillar-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    padding: 0.5rem 1rem;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .pillar-chip .btn-arrow {
+    color: var(--orange);
+  }
+
+  .pillar-chip:active {
+    transform: scale(0.95);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .pillar-chip:hover {
+      background: rgba(255, 255, 255, 0.16);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .pillar-chip:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tab-indicator,
+    .ecosystem-tab .btn-arrow {
+      transition: none;
+    }
+
+    .ecosystem-tab,
+    .ecosystem-tab:active,
+    .pillar-chip,
+    .pillar-chip:active {
+      transform: none;
+    }
+  }
+
+  /* Below desktop the index becomes one scrollable row of pills above the
+     panel - the homepage tab strip, on navy. */
+  @media (max-width: 1023.98px) {
+    .tabbed .ecosystem-stage {
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    .tabbed .ecosystem-tabs {
+      display: flex;
+      gap: 0.6rem;
+      border-top: 0;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+      scrollbar-width: none;
+      padding-block: 0.25rem 0.5rem;
+      margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem));
+      padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .tabbed .ecosystem-tabs::-webkit-scrollbar {
+      display: none;
+    }
+
+    .tab-indicator {
+      display: none;
+    }
+
+    .ecosystem-tab {
+      flex: 0 0 auto;
+      scroll-snap-align: start;
+      grid-template-columns: auto auto;
+      gap: 0.6rem;
+      padding: 0.55rem 1.1rem 0.55rem 0.9rem;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+
+    .ecosystem-tab:active {
+      transform: scale(0.95);
+    }
+
+    .tab-role,
+    .ecosystem-tab .btn-arrow {
+      display: none;
+    }
+
+    .tab-name {
+      font-size: 0.76rem;
+      letter-spacing: 0.08em;
+    }
+
+    .tab-index {
+      letter-spacing: 0.1em;
+    }
+
+    .ecosystem-tab.active {
+      background: var(--orange);
+      border-color: var(--orange);
+    }
+
+    .ecosystem-tab.active .tab-name,
+    .ecosystem-tab.active .tab-index {
+      color: var(--navy);
+    }
+  }
+</style>

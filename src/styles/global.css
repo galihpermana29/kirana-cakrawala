@@ -7,6 +7,8 @@
   --blue: #0082ca;
   --cyan: #00a7e0;
   --slate: #67788d;
+  /* Form validation only - the palette has no other red. */
+  --danger: #b3261e;
   --bg: #ffffff;
   --surface: #f4f5f7;
   --line: rgba(1, 30, 65, 0.12);
@@ -120,6 +122,15 @@ a {
   color: var(--slate);
   max-width: 46rem;
   font-size: 1.02rem;
+}
+
+/* Heading + intro block under the section label; every section opens
+   with one. */
+.section-head {
+  display: grid;
+  gap: 1rem;
+  margin-bottom: clamp(2.25rem, 5vw, 3.5rem);
+  max-width: 52rem;
 }
 
 /* Full-bleed navy band: the light-page translation of scytalys's

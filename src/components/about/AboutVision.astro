@@ -1,0 +1,171 @@
+---
+import type { VisionContent } from '../../content/about';
+
+interface Props {
+  content: VisionContent;
+}
+
+const { content } = Astro.props;
+---
+
+<!-- The vision statement in full, the page's one full-bleed picture under
+     it: an aircraft climbing into the light, under the same heavy navy wash
+     as the closing band so the words stay the subject. -->
+<section class="band-navy section vision" id="vision" data-vision>
+  <img class="vision-bg" src={content.image.src} alt="" loading="lazy" aria-hidden="true" />
+  <div class="vision-tint" aria-hidden="true"></div>
+  <div class="container vision-inner">
+    <p class="section-label" data-vision-label>{content.label}</p>
+    <p class="vision-statement" data-vision-statement>{content.statement}</p>
+    <div class="vision-outcomes" data-vision-outcomes>
+      <p class="outcomes-label">{content.outcomesLabel}</p>
+      <ul class="outcomes-list">
+        {
+          content.outcomes.map((outcome) => (
+            <li class="outcome" data-vision-outcome>
+              <span class="outcome-dot" aria-hidden="true" />
+              {outcome}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { lightWords, motionReady, revealUp, scrambleIn } from '../../lib/motion';
+
+  const section = document.querySelector('[data-vision]');
+  const label = document.querySelector('[data-vision-label]');
+  const statement = document.querySelector('[data-vision-statement]');
+  const outcomes = document.querySelector('[data-vision-outcomes]');
+
+  // White on navy: the words start dimmed and light to full white.
+  const palette = { from: 'rgba(255, 255, 255, 0.28)', to: '#ffffff' };
+
+  function revealOutcomes() {
+    if (!outcomes) return;
+    revealUp('[data-vision-outcomes] .outcomes-label, [data-vision-outcome]', {
+      trigger: outcomes,
+      stagger: 0.08,
+      y: 16,
+      duration: 0.6,
+    });
+  }
+
+  if (section && label && statement) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        lightWords(statement, { scrub: true, ...palette });
+        revealOutcomes();
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        lightWords(statement, palette);
+        revealOutcomes();
+      },
+    });
+  }
+</script>
+
+<style>
+  .vision {
+    position: relative;
+    overflow: hidden;
+    background: var(--navy);
+  }
+
+  .vision-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 40%;
+  }
+
+  /* Heavy wash from the copy side; the sun in the picture reads through
+     the far edge as a glow, not as competition for the words. */
+  .vision-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      100deg,
+      rgba(1, 15, 36, 0.95) 30%,
+      rgba(1, 30, 65, 0.82) 60%,
+      rgba(1, 30, 65, 0.5)
+    );
+  }
+
+  .vision-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: start;
+    gap: 1.6rem;
+  }
+
+  .vision-statement {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.4rem, 2.9vw, 2.6rem);
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    color: #fff;
+    max-width: 62rem;
+    text-wrap: pretty;
+  }
+
+  .vision-outcomes {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 0.6rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.16);
+    width: 100%;
+  }
+
+  .outcomes-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.55);
+  }
+
+  .outcomes-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2.25rem;
+  }
+
+  .outcome {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    color: #fff;
+  }
+
+  .outcome-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--orange);
+    box-shadow: 0 0 0 3px rgba(249, 156, 36, 0.25);
+  }
+
+  @media (max-width: 639.98px) {
+    .outcomes-list {
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+  }
+</style>

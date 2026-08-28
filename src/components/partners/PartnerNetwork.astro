@@ -1,0 +1,118 @@
+---
+import { home } from '../../content/home';
+import { partnersLabels } from '../../content/partners';
+import type { SectionIntro } from '../../content/what-we-do';
+import NetworkMap from './NetworkMap.astro';
+
+interface Props {
+  head: SectionIntro;
+}
+
+const { head } = Astro.props;
+---
+
+<!-- The homepage's dotted map, larger: a wider wrap, a denser grid, the
+     regions named, and the HQ-to-region connections drawn over it. -->
+<section class="section network" id="network" data-network>
+  <div class="container">
+    <p class="section-label" data-network-label>{head.label}</p>
+    <div class="section-head">
+      <h2>{head.heading}</h2>
+      <p class="section-intro">{head.intro}</p>
+    </div>
+  </div>
+  <div class="network-wide">
+    <NetworkMap height={80} arcs labelled />
+  </div>
+  <div class="container">
+    <ul class="map-legend" aria-label={partnersLabels.legend} data-network-legend>
+      <li>
+        <span class="legend-dot legend-dot-hq" aria-hidden="true"></span>
+        {home.brandAbbr} - {home.ecosystem.hq.name}
+      </li>
+      <li>
+        <span class="legend-dot" aria-hidden="true"></span>
+        {partnersLabels.regions}
+      </li>
+      <li>
+        <span class="legend-line" aria-hidden="true"></span>
+        {partnersLabels.connections}
+      </li>
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { motionReady, revealUp, scrambleIn } from '../../lib/motion';
+
+  const section = document.querySelector('[data-network]');
+  const label = document.querySelector('[data-network-label]');
+  const legend = document.querySelector('[data-network-legend]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-network] .section-head > *', { trigger: section, stagger: 0.09 });
+      // The map animates itself (NetworkMap); the legend follows it in.
+      if (legend) {
+        revealUp('[data-network-legend] li', {
+          trigger: legend,
+          stagger: 0.06,
+          y: 12,
+          duration: 0.55,
+        });
+      }
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .network-wide {
+    max-width: 96rem;
+    margin-inline: auto;
+    padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+  }
+
+  .map-legend {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+    margin-top: clamp(1.75rem, 4vw, 2.75rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--line);
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .map-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .legend-dot {
+    width: 0.7rem;
+    height: 0.7rem;
+    border-radius: 50%;
+    background: var(--orange);
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px rgba(249, 156, 36, 0.3);
+  }
+
+  .legend-dot-hq {
+    background: var(--blue);
+    box-shadow: 0 0 0 2px rgba(0, 130, 202, 0.25);
+  }
+
+  .legend-line {
+    width: 1.5rem;
+    height: 2px;
+    border-radius: 1px;
+    background: rgba(0, 130, 202, 0.55);
+  }
+</style>

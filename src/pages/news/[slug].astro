@@ -1,0 +1,42 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import ArticleBody from '../../components/news/ArticleBody.astro';
+import ArticleGrid from '../../components/news/ArticleGrid.astro';
+import ArticleHero from '../../components/news/ArticleHero.astro';
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import { home } from '../../content/home';
+import {
+  articleCta,
+  articles,
+  continueReading,
+  relatedArticles,
+} from '../../content/news';
+import { ctaImage } from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// One template, one page per article.
+export const getStaticPaths = (() =>
+  articles.map((article) => ({
+    params: { slug: article.slug },
+    props: { article },
+  }))) satisfies GetStaticPaths;
+
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+
+const { article } = Astro.props;
+const cta = articleCta(article);
+---
+
+<HomeLayout title={`${article.title} - ${home.companyName}`} description={article.excerpt}>
+  <ArticleHero article={article} />
+  <ArticleBody article={article} />
+  <ArticleGrid head={continueReading} items={relatedArticles(article)} />
+  <PillarCta
+    label={cta.label}
+    heading={cta.heading}
+    body={cta.body}
+    primary={cta.primary}
+    secondary={cta.secondary}
+    image={ctaImage}
+  />
+</HomeLayout>

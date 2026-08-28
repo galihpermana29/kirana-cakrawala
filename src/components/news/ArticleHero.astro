@@ -1,0 +1,240 @@
+---
+import {
+  categoryLabels,
+  longDate,
+  newsIndex,
+  newsLabels,
+  NEWS_PATH,
+  type Article,
+} from '../../content/news';
+
+interface Props {
+  article: Article;
+}
+
+const { article } = Astro.props;
+---
+
+<!-- Editorial head: crumb, title, standfirst, meta on white, then the
+     article's picture at container width - full-bleed on phones. -->
+<section class="article-hero" data-article-hero>
+  <div class="container">
+    <div class="hero-copy">
+      <p class="hero-eyebrow" data-hero-eyebrow>
+        <span class="eyebrow-dot" aria-hidden="true"></span>
+        <a class="eyebrow-crumb" href={NEWS_PATH}>{newsIndex.title}</a>
+        <span class="eyebrow-sep" aria-hidden="true">/</span>
+        <span data-hero-category>{categoryLabels[article.category]}</span>
+      </p>
+      <h1 class="hero-heading" data-hero-heading>{article.title}</h1>
+      <p class="hero-standfirst" data-hero-sub>{article.excerpt}</p>
+      <p class="hero-meta" data-hero-meta>
+        <time datetime={article.date}>{longDate(article.date)}</time>
+        <span class="meta-sep" aria-hidden="true">/</span>
+        <span class="hero-read">{article.readingMinutes} {newsLabels.minRead}</span>
+      </p>
+    </div>
+    <figure class="hero-figure" data-hero-figure>
+      <img src={article.image.src} alt={article.image.alt} fetchpriority="high" />
+      <div class="hero-figure-tint" aria-hidden="true"></div>
+    </figure>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, whenVisible, EASE } from '../../lib/motion';
+
+  const section = document.querySelector('[data-article-hero]');
+  const category = document.querySelector('[data-hero-category]');
+  const figure = document.querySelector<HTMLElement>('[data-hero-figure]');
+  const image = figure?.querySelector('img');
+
+  function intro() {
+    gsap.from('[data-hero-eyebrow]', {
+      autoAlpha: 0,
+      y: 10,
+      duration: 0.5,
+      ease: EASE,
+      delay: 0.05,
+    });
+    // The category decodes (the house label motif); the title itself is too
+    // long to scramble legibly, so it settles up like body copy.
+    if (category) scrambleIn(category, { delay: 0.2 });
+    gsap.from('[data-hero-heading]', {
+      autoAlpha: 0,
+      y: 22,
+      duration: 0.8,
+      ease: EASE,
+      delay: 0.2,
+    });
+    gsap.from('[data-hero-sub], [data-hero-meta]', {
+      autoAlpha: 0,
+      y: 14,
+      duration: 0.6,
+      ease: EASE,
+      stagger: 0.12,
+      delay: 0.55,
+    });
+  }
+
+  if (section) {
+    motionReady(section, {
+      desktop: () =>
+        whenVisible(() => {
+          intro();
+          // The picture rises in under the copy and eases out of a slight zoom.
+          if (figure) {
+            gsap.from(figure, { autoAlpha: 0, y: 30, duration: 1, ease: EASE, delay: 0.45 });
+          }
+          if (image) {
+            gsap.from(image, { scale: 1.06, duration: 1.6, ease: EASE, delay: 0.45 });
+          }
+        }),
+      mobile: () =>
+        whenVisible(() => {
+          intro();
+          if (figure) revealUp(figure, { trigger: figure, y: 40, duration: 0.9 });
+        }),
+    });
+  }
+</script>
+
+<style>
+  .article-hero {
+    background: var(--bg);
+    padding-top: clamp(3rem, 6vw, 5rem);
+  }
+
+  .hero-copy {
+    display: grid;
+    gap: 1.25rem;
+    justify-items: start;
+    max-width: 50rem;
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .eyebrow-dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+  }
+
+  /* Pulse ring - transform and opacity only. */
+  .eyebrow-dot::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--orange);
+    animation: eyebrow-pulse 2s ease-out infinite;
+  }
+
+  @keyframes eyebrow-pulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eyebrow-dot::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  .eyebrow-crumb {
+    color: var(--orange);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .eyebrow-crumb:hover {
+      color: var(--blue);
+    }
+  }
+
+  .hero-heading {
+    font-size: clamp(1.9rem, 3.6vw, 3.1rem);
+    line-height: 1.1;
+  }
+
+  .hero-standfirst {
+    color: var(--slate);
+    font-size: 1.1rem;
+    max-width: 40rem;
+  }
+
+  .hero-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    color: var(--orange);
+  }
+
+  .meta-sep {
+    color: rgba(1, 30, 65, 0.3);
+  }
+
+  .hero-read {
+    color: var(--slate);
+  }
+
+  .hero-figure {
+    position: relative;
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    background: var(--navy-deep);
+  }
+
+  .hero-figure img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* A light navy foot so the picture sits on the page rather than floating. */
+  .hero-figure-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(1, 30, 65, 0.35), rgba(1, 30, 65, 0) 45%);
+  }
+
+  /* Phones: the picture bleeds to the edges under the same clipped top edge
+     as the other heroes. */
+  @media (max-width: 1023.98px) {
+    .hero-figure {
+      aspect-ratio: 16 / 10;
+      border-radius: 0;
+      margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem));
+      clip-path: polygon(0 6%, 100% 0, 100% 100%, 0 100%);
+    }
+  }
+</style>

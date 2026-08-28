@@ -1,0 +1,198 @@
+---
+import { pad, type OverviewContent } from '../../content/what-we-do';
+
+interface Props {
+  overview: OverviewContent;
+}
+
+const { overview } = Astro.props;
+---
+
+<section class="section" id="overview" data-overview>
+  <div class="container">
+    <p class="section-label" data-overview-label>{overview.label}</p>
+    <div class="overview-rule" aria-hidden="true"></div>
+    <div class="overview-grid">
+      <div class="overview-main">
+        <p class="mission-tag">
+          <span class="mission-number">Mission {pad(overview.mission.number)}</span>
+          <span class="mission-title">{overview.mission.title}</span>
+        </p>
+        <p class="overview-statement" data-overview-statement>{overview.mission.text}</p>
+        <div class="overview-body">
+          {overview.body.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+      <aside class="overview-scope" data-overview-scope>
+        <p class="scope-label">{overview.scopeLabel}</p>
+        <ol class="scope-list">
+          {
+            overview.scope.map((item, i) => (
+              <li>
+                <span class="scope-index" aria-hidden="true">{pad(i + 1)}</span>
+                {item}
+              </li>
+            ))
+          }
+        </ol>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, lightWords, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-overview]');
+  const label = document.querySelector('[data-overview-label]');
+  const statement = document.querySelector('[data-overview-statement]');
+  const scope = document.querySelector('[data-overview-scope]');
+
+  function revealFrame() {
+    if (!section) return;
+    // Rule sweeps in from the left; tag and body settle up after it.
+    gsap.from('[data-overview] .overview-rule', {
+      scaleX: 0,
+      transformOrigin: 'left center',
+      duration: 0.8,
+      ease: EASE,
+      scrollTrigger: { trigger: section, start: REVEAL_START },
+    });
+    revealUp('[data-overview] .mission-tag', { trigger: section, delay: 0.1 });
+    revealUp('[data-overview] .overview-body > p', {
+      trigger: section,
+      delay: 0.3,
+      stagger: 0.09,
+    });
+    if (scope) {
+      revealUp('[data-overview-scope] .scope-label, [data-overview-scope] li', {
+        trigger: scope,
+        stagger: 0.06,
+        y: 14,
+        duration: 0.6,
+      });
+    }
+  }
+
+  if (section && statement && label) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        // The mission statement lights up word by word as it is read.
+        lightWords(statement, { scrub: true });
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        lightWords(statement);
+      },
+    });
+  }
+</script>
+
+<style>
+  .overview-rule {
+    height: 1px;
+    background: linear-gradient(to right, var(--orange), var(--line) 65%);
+    margin-bottom: clamp(1.75rem, 4vw, 3rem);
+  }
+
+  .overview-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .overview-main {
+    border-left: 2px solid var(--orange);
+    padding-left: clamp(1.25rem, 3vw, 2.25rem);
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .mission-tag {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.75rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .mission-number {
+    color: var(--orange);
+    font-weight: 700;
+  }
+
+  .mission-number::after {
+    content: ' /';
+    color: var(--slate);
+    font-weight: 400;
+  }
+
+  .overview-statement {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.15rem, 2.2vw, 1.7rem);
+    line-height: 1.35;
+    letter-spacing: 0.01em;
+    color: var(--navy);
+  }
+
+  .overview-body {
+    display: grid;
+    gap: 1rem;
+    color: var(--slate);
+    max-width: 40rem;
+  }
+
+  .overview-scope {
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    padding: 1.5rem 1.75rem 0.5rem;
+  }
+
+  .scope-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.6rem;
+  }
+
+  .scope-list {
+    list-style: none;
+  }
+
+  .scope-list li {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+
+  .scope-index {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    color: var(--orange);
+  }
+
+  @media (max-width: 1023.98px) {
+    .overview-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+</style>

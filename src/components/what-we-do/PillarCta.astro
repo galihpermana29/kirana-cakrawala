@@ -1,0 +1,99 @@
+---
+import type { NavItem, SourcedImage } from '../../content/home';
+
+interface Props {
+  label: string;
+  heading: string;
+  body: string;
+  primary: NavItem;
+  secondary: NavItem;
+  image: SourcedImage;
+}
+
+const { label, heading, body, primary, secondary, image } = Astro.props;
+---
+
+<!-- Every page ends on the same band as the homepage commitment - a route
+     back into the site: contact, or the next logical page. -->
+<section class="band-navy section pillar-cta" data-pillar-cta>
+  <img class="cta-bg" src={image.src} alt="" loading="lazy" aria-hidden="true" />
+  <div class="cta-tint" aria-hidden="true"></div>
+  <div class="container cta-inner">
+    <p class="section-label" data-pillar-cta-label>{label}</p>
+    <h2>{heading}</h2>
+    <p class="section-intro">{body}</p>
+    <div class="cta-actions">
+      <a class="btn btn-primary" href={primary.href}>
+        {primary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+      <a class="btn btn-ghost" href={secondary.href}>
+        {secondary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-pillar-cta]');
+  const label = document.querySelector('[data-pillar-cta-label]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      gsap.from('[data-pillar-cta] h2, [data-pillar-cta] .section-intro, [data-pillar-cta] .btn', {
+        autoAlpha: 0,
+        y: 26,
+        duration: 0.8,
+        ease: EASE,
+        stagger: 0.14,
+        scrollTrigger: { trigger: section, start: REVEAL_START },
+      });
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .pillar-cta {
+    position: relative;
+    overflow: hidden;
+    background: var(--navy);
+  }
+
+  .cta-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Heavy navy wash keeps the copy the hero of the band, the wing a mood. */
+  .cta-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      80deg,
+      rgba(1, 15, 36, 0.94) 25%,
+      rgba(1, 30, 65, 0.78) 55%,
+      rgba(1, 30, 65, 0.45)
+    );
+  }
+
+  .cta-inner {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    justify-items: start;
+    gap: 1.4rem;
+    max-width: 56rem;
+  }
+
+  .cta-actions {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+</style>

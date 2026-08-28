@@ -1,62 +1,44 @@
 ---
-import DottedMap from 'dotted-map';
 import { home } from '../../content/home';
+import { categoryHref } from '../../content/partners';
+import NetworkMap from '../partners/NetworkMap.astro';
 
-const { ecosystem, brandAbbr } = home;
-
-// Build-time generation; the SVG is static markup by the time it ships.
-const map = new DottedMap({ height: 60, grid: 'diagonal' });
-const mapSvg = map.getSVG({
-  shape: 'circle',
-  color: '#c3cddb',
-  backgroundColor: 'transparent',
-  radius: 0.32,
-});
-
-const hqPin = { xPct: 79, yPct: 57 };
+const { ecosystem } = home;
 ---
 
 <section class="section" id="ecosystem" data-partners>
   <div class="container">
     <p class="section-label" data-partners-label>{ecosystem.label}</p>
     <div class="partners-head">
-      <h2>{ecosystem.heading}</h2>
-      <p class="section-intro">{ecosystem.intro}</p>
+      <div>
+        <h2>{ecosystem.heading}</h2>
+        <p class="section-intro">{ecosystem.intro}</p>
+      </div>
+      <a class="btn btn-ghost" href={ecosystem.link.href}>
+        {ecosystem.link.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
     </div>
   </div>
 
-  <div class="container partners-map-wrap" data-partners-map>
-    <div class="partners-map" set:html={mapSvg} />
-    {
-      ecosystem.network.map((node) => (
-        <button
-          type="button"
-          class="map-pin"
-          style={`left: ${node.xPct}%; top: ${node.yPct}%`}
-          aria-label={node.name}
-          data-map-pin
-        >
-          <span class="map-pin-pulse" aria-hidden="true" />
-          <span class="map-pin-label">{node.name}</span>
-        </button>
-      ))
-    }
-    <span
-      class="map-pin map-pin-hq"
-      style={`left: ${hqPin.xPct}%; top: ${hqPin.yPct}%`}
-    >
-      <span class="map-pin-pulse" aria-hidden="true"></span>
-      <span class="map-pin-label map-pin-label-fixed">{brandAbbr} - Jakarta HQ</span>
-    </span>
+  <div class="container">
+    <NetworkMap />
   </div>
 
+  <!-- Each category scrolls past as a link into its tab on the Partners page;
+       the second copy only closes the loop, so it is hidden and unfocusable. -->
   <div class="partners-marquee" data-partners-marquee aria-label="Partner categories">
     <div class="marquee-track">
       {
         [0, 1].map((copy) => (
           <div class="marquee-group" aria-hidden={copy === 1 ? 'true' : undefined}>
             {ecosystem.categories.map((category) => (
-              <span class="marquee-item">{category}</span>
+              <a
+                class="marquee-item"
+                href={categoryHref(category.id)}
+                tabindex={copy === 1 ? -1 : undefined}
+              >
+                {category.name}
+              </a>
             ))}
           </div>
         ))
@@ -66,206 +48,44 @@ const hqPin = { xPct: 79, yPct: 57 };
 </section>
 
 <script>
-  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+  import { gsap, motionReady, revealUp, scrambleIn } from '../../lib/motion';
 
   const section = document.querySelector('[data-partners]');
   const label = document.querySelector('[data-partners-label]');
-  const mapWrap = document.querySelector('[data-partners-map]');
 
-  if (section && label && mapWrap) {
+  if (section && label) {
     const enter = () => {
       scrambleIn(label, { trigger: section });
       revealUp('[data-partners] .partners-head > *', {
         trigger: section,
         stagger: 0.09,
       });
-      // The marquee already moves sideways - it only needs to fade in.
+      // The map animates itself (NetworkMap). The marquee already moves
+      // sideways - it only needs to fade in.
       gsap.from('[data-partners-marquee]', {
         autoAlpha: 0,
         duration: 0.9,
         ease: 'power2.out',
         scrollTrigger: { trigger: '[data-partners-marquee]', start: 'top 82%' },
       });
-      gsap.from(mapWrap, {
-        autoAlpha: 0,
-        y: 40,
-        duration: 0.9,
-        ease: EASE,
-        scrollTrigger: { trigger: mapWrap, start: REVEAL_START },
-      });
-      gsap.from('.map-pin', {
-        scale: 0.4,
-        transformOrigin: 'center',
-        duration: 0.45,
-        ease: 'back.out(2.5)',
-        stagger: 0.1,
-        delay: 0.35,
-        scrollTrigger: { trigger: mapWrap, start: REVEAL_START },
-      });
     };
     motionReady(section, { desktop: enter, mobile: enter });
   }
-
-  // Tap-to-toggle labels for touch; one open at a time, outside tap closes.
-  const pins = Array.from(document.querySelectorAll<HTMLElement>('[data-map-pin]'));
-  pins.forEach((pin) => {
-    pin.addEventListener('click', (event) => {
-      event.stopPropagation();
-      pins.forEach((other) => other !== pin && other.classList.remove('active'));
-      pin.classList.toggle('active');
-    });
-  });
-  document.addEventListener('click', () =>
-    pins.forEach((pin) => pin.classList.remove('active')),
-  );
 </script>
 
 <style>
   .partners-head {
-    display: grid;
-    gap: 1rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
     margin-bottom: clamp(2rem, 5vw, 3rem);
-    max-width: 52rem;
   }
 
-  .partners-map-wrap {
-    position: relative;
-    container-type: inline-size;
+  .partners-head h2 {
+    margin-bottom: 0.75rem;
   }
-
-  .partners-map :global(svg) {
-    width: 100%;
-    height: auto;
-    display: block;
-  }
-
-  /* Pin geometry rides on font-size so everything scales with the map. */
-  .map-pin {
-    position: absolute;
-    font-size: clamp(16px, 2.2cqw, 30px);
-    width: 1em;
-    height: 1em;
-    padding: 0;
-    cursor: pointer;
-    border-radius: 50%;
-    background: var(--orange);
-    border: 3px solid #fff;
-    transform: translate(-50%, -50%);
-    box-shadow:
-      0 0 0 0.22em rgba(249, 156, 36, 0.3),
-      0 4px 14px rgba(1, 30, 65, 0.25);
-    transition: transform 160ms var(--ease-out-expo);
-  }
-
-  /* Soft glow patch marking the whole region, not just the point. */
-  .map-pin::before {
-    content: '';
-    position: absolute;
-    inset: -1.6em;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(249, 156, 36, 0.22), transparent 65%);
-    pointer-events: none;
-  }
-
-  .map-pin-hq::before {
-    background: radial-gradient(circle, rgba(0, 130, 202, 0.24), transparent 65%);
-  }
-
-  .map-pin-pulse {
-    position: absolute;
-    inset: -0.55em;
-    border-radius: 50%;
-    border: 2px solid var(--orange);
-    animation: pin-pulse 2.2s ease-out infinite;
-  }
-
-  @keyframes pin-pulse {
-    0% {
-      transform: scale(0.45);
-      opacity: 0.9;
-    }
-    100% {
-      transform: scale(1.6);
-      opacity: 0;
-    }
-  }
-
-  .map-pin-hq {
-    background: var(--blue);
-    box-shadow: 0 0 0 3px rgba(0, 130, 202, 0.22);
-  }
-
-  .map-pin-hq .map-pin-pulse {
-    border-color: var(--blue);
-  }
-
-  /* Labels appear on hover (mouse), tap-toggle (touch), or focus. */
-  .map-pin-label {
-    position: absolute;
-    left: 1.3em;
-    top: 50%;
-    translate: 0 -50%;
-    font-family: var(--font-display);
-    font-size: clamp(12px, 0.62em, 18px);
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--navy);
-    white-space: nowrap;
-    pointer-events: none;
-    background: rgba(255, 255, 255, 0.85);
-    padding: 0.15em 0.45em;
-    border-radius: 0.3em;
-    opacity: 0;
-    transform: translateX(-0.25em);
-    transition:
-      opacity 140ms ease,
-      transform 200ms var(--ease-out-expo);
-  }
-
-  .map-pin.active .map-pin-label,
-  .map-pin:focus-visible .map-pin-label {
-    opacity: 1;
-    transform: translateX(0);
-  }
-
-  /* The HQ label is the map's anchor - always on. */
-  .map-pin-label-fixed {
-    color: var(--blue);
-    opacity: 1;
-    transform: none;
-  }
-
-  @media (hover: hover) and (pointer: fine) {
-    .map-pin:hover {
-      transform: translate(-50%, -50%) scale(1.3);
-    }
-
-    .map-pin:hover .map-pin-label {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .map-pin-label {
-      transition: none;
-      transform: none;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .map-pin-pulse {
-      animation: none;
-      opacity: 0.35;
-    }
-
-    .map-pin,
-    .map-pin:hover {
-      transform: translate(-50%, -50%);
-    }
-  }
-
 
   .partners-marquee {
     margin-top: clamp(2.5rem, 6vw, 4rem);
@@ -280,7 +100,9 @@ const hqPin = { xPct: 79, yPct: 57 };
     animation: marquee 26s linear infinite;
   }
 
-  .partners-marquee:hover .marquee-track {
+  /* Holds still under the cursor so a category can be clicked. */
+  .partners-marquee:hover .marquee-track,
+  .partners-marquee:focus-within .marquee-track {
     animation-play-state: paused;
   }
 
@@ -301,9 +123,29 @@ const hqPin = { xPct: 79, yPct: 57 };
     font-weight: 700;
     font-size: clamp(1rem, 2.2vw, 1.4rem);
     color: var(--slate);
+    text-decoration: none;
     padding-inline: clamp(1.5rem, 4vw, 3rem);
     white-space: nowrap;
-    transition: color 150ms ease;
+    transition:
+      color 150ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .marquee-item:active {
+    transform: scale(0.96);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee-item,
+    .marquee-item:active {
+      transform: none;
+    }
+  }
+
+  .marquee-item:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 4px;
+    border-radius: 0.25rem;
   }
 
   @media (hover: hover) and (pointer: fine) {

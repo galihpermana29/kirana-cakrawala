@@ -1,0 +1,139 @@
+---
+import { pad, type PillarPage } from '../../content/what-we-do';
+
+interface Props {
+  pillar: PillarPage;
+}
+
+const { capabilities } = Astro.props.pillar;
+---
+
+<section class="band-navy section" id="capabilities" data-capabilities>
+  <div class="container">
+    <p class="section-label" data-capabilities-label>{capabilities.label}</p>
+    <div class="section-head">
+      <h2>{capabilities.heading}</h2>
+      <p class="section-intro">{capabilities.intro}</p>
+    </div>
+    <div class="cap-grid">
+      {
+        capabilities.items.map((item, i) => (
+          <article class="cap-card" data-cap-card>
+            <p class="cap-index">{pad(i + 1)}</p>
+            <h3 class="cap-title">{item.title}</h3>
+            <p class="cap-description">{item.description}</p>
+          </article>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-capabilities]');
+  const label = document.querySelector('[data-capabilities-label]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-capabilities] .section-head > *', {
+        trigger: section,
+        stagger: 0.09,
+      });
+      gsap.from('[data-cap-card]', {
+        autoAlpha: 0,
+        y: 34,
+        duration: 0.7,
+        ease: EASE,
+        stagger: 0.08,
+        scrollTrigger: { trigger: '[data-capabilities] .cap-grid', start: REVEAL_START },
+      });
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+
+  .cap-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 1.75rem;
+    display: grid;
+    align-content: start;
+    gap: 0.75rem;
+    transition:
+      background 180ms ease,
+      border-color 180ms ease;
+  }
+
+  /* Orange top rule that draws across on hover - transform only. The cards
+     are not links, so no grow or press: the highlight is a reading aid. */
+  .cap-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--orange);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 260ms var(--ease-out-expo);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .cap-card:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(249, 156, 36, 0.45);
+    }
+
+    .cap-card:hover::before {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cap-card::before {
+      transition: none;
+    }
+  }
+
+  .cap-index {
+    font-family: var(--font-display);
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    color: var(--orange);
+  }
+
+  .cap-title {
+    font-size: 1.02rem;
+  }
+
+  .cap-description {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 1023.98px) {
+    .cap-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 639.98px) {
+    .cap-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

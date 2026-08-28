@@ -1,0 +1,292 @@
+---
+import type { NavItem, SourcedImage } from '../../content/home';
+
+interface Props {
+  /* Eyebrow text before the slash; links to the hub on pillar pages. */
+  crumb: string;
+  crumbHref?: string;
+  /* Eyebrow text after the slash, e.g. "01 of 04". */
+  eyebrow: string;
+  heading: string;
+  standfirst: string;
+  image: SourcedImage;
+  /* Big index watermark on the figure; omitted on the hub. */
+  index?: string;
+  primary: NavItem;
+  secondary: NavItem;
+}
+
+const {
+  crumb,
+  crumbHref,
+  eyebrow,
+  heading,
+  standfirst,
+  image,
+  index,
+  primary,
+  secondary,
+} = Astro.props;
+---
+
+<section class="pillar-hero" data-pillar-hero>
+  <div class="hero-copy">
+    <p class="hero-eyebrow" data-hero-eyebrow>
+      <span class="eyebrow-dot" aria-hidden="true"></span>
+      {
+        crumbHref ? (
+          <a class="eyebrow-crumb" href={crumbHref}>
+            {crumb}
+          </a>
+        ) : (
+          <span class="eyebrow-crumb">{crumb}</span>
+        )
+      }
+      <span class="eyebrow-sep" aria-hidden="true">/</span>
+      <span>{eyebrow}</span>
+    </p>
+    <h1 class="hero-heading" data-hero-heading>{heading}</h1>
+    <p class="hero-standfirst" data-hero-sub>{standfirst}</p>
+    <div class="hero-ctas" data-hero-ctas>
+      <a class="btn btn-primary" href={primary.href}>
+        {primary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+      <a class="btn btn-ghost" href={secondary.href}>
+        {secondary.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- The pillar's image as an object with a slanted edge - the inner-page
+       echo of the homepage hero ribbon. -->
+  <figure class="hero-figure" data-hero-figure>
+    <img src={image.src} alt={image.alt} fetchpriority="high" />
+    <div class="hero-figure-tint" aria-hidden="true"></div>
+    {index && <span class="hero-figure-index" aria-hidden="true">{index}</span>}
+  </figure>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, whenVisible, EASE } from '../../lib/motion';
+
+  const section = document.querySelector('[data-pillar-hero]');
+  const heading = document.querySelector('[data-hero-heading]');
+  const figure = document.querySelector('[data-hero-figure]');
+
+  function intro() {
+    gsap.from('[data-hero-eyebrow]', {
+      autoAlpha: 0,
+      y: 10,
+      duration: 0.5,
+      ease: EASE,
+      delay: 0.05,
+    });
+    // The heading decodes first; standfirst and CTAs settle in under it.
+    if (heading) scrambleIn(heading, { delay: 0.15 });
+    gsap.from('[data-hero-sub]', {
+      autoAlpha: 0,
+      y: 14,
+      duration: 0.6,
+      ease: EASE,
+      delay: 0.7,
+    });
+    gsap.from('[data-hero-ctas] .btn', {
+      autoAlpha: 0,
+      y: 18,
+      duration: 0.7,
+      ease: EASE,
+      stagger: 0.12,
+      delay: 0.85,
+    });
+  }
+
+  if (section) {
+    motionReady(section, {
+      desktop: () =>
+        whenVisible(() => {
+          // The figure slides in from the right edge as the heading decodes.
+          if (figure) {
+            gsap.from(figure, { autoAlpha: 0, x: 70, duration: 1.1, ease: EASE });
+          }
+          intro();
+        }),
+      mobile: () =>
+        whenVisible(() => {
+          intro();
+          // Full-bleed image sits below the copy - reveal on scroll.
+          if (figure) revealUp(figure, { trigger: figure, y: 40, duration: 0.9 });
+        }),
+    });
+  }
+</script>
+
+<style>
+  .pillar-hero {
+    --gutter: clamp(1.25rem, 4vw, 2.5rem);
+    position: relative;
+    overflow: hidden;
+    container-type: inline-size;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    min-height: min(40rem, 82vh);
+    background: var(--bg);
+  }
+
+  /* Copy aligns with the .container grid while the figure bleeds to the
+     viewport edge: pad from the section's own inline size (cqw). */
+  .hero-copy {
+    display: grid;
+    align-content: center;
+    justify-items: start;
+    gap: 1.4rem;
+    padding-block: clamp(4rem, 8vw, 6.5rem);
+    padding-inline-start: max(
+      var(--gutter),
+      calc((100cqw - var(--max-width)) / 2 + var(--gutter))
+    );
+    padding-inline-end: clamp(2rem, 5cqw, 4.5rem);
+  }
+
+  .hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    color: var(--slate);
+  }
+
+  .eyebrow-dot {
+    position: relative;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--orange);
+  }
+
+  /* Pulse ring - transform and opacity only. */
+  .eyebrow-dot::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--orange);
+    animation: eyebrow-pulse 2s ease-out infinite;
+  }
+
+  @keyframes eyebrow-pulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .eyebrow-dot::after {
+      animation: none;
+      opacity: 0;
+    }
+  }
+
+  .eyebrow-crumb {
+    color: var(--orange);
+    font-weight: 700;
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    a.eyebrow-crumb:hover {
+      color: var(--blue);
+    }
+  }
+
+  .hero-heading {
+    font-size: clamp(2rem, 3.6cqw, 3.4rem);
+    line-height: 1.08;
+  }
+
+  .hero-standfirst {
+    color: var(--slate);
+    font-size: 1.05rem;
+    max-width: 34rem;
+  }
+
+  .hero-ctas {
+    display: flex;
+    gap: 0.9rem;
+    flex-wrap: wrap;
+  }
+
+  .hero-figure {
+    position: relative;
+    margin: 0;
+    background: var(--navy-deep);
+    clip-path: polygon(9% 0, 100% 0, 100% 100%, 0 100%);
+  }
+
+  .hero-figure img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  /* Navy ramp from the copy side so the slanted edge reads as one shape. */
+  .hero-figure-tint {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      25deg,
+      rgba(1, 30, 65, 0.74) 10%,
+      rgba(1, 30, 65, 0.3) 50%,
+      rgba(1, 30, 65, 0.08)
+    );
+  }
+
+  .hero-figure-index {
+    position: absolute;
+    left: 12%;
+    bottom: 4%;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(6rem, 13cqw, 12rem);
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: rgba(255, 255, 255, 0.16);
+  }
+
+  /* Mobile/tablet: copy on white first, then the image full-bleed below
+     it with the same clipped top edge as the homepage. */
+  @media (max-width: 1023.98px) {
+    .pillar-hero {
+      grid-template-columns: 1fr;
+      align-items: start;
+      min-height: 0;
+    }
+
+    .hero-copy {
+      padding: 2.5rem var(--gutter) 0;
+    }
+
+    .hero-figure {
+      aspect-ratio: 16 / 11;
+      margin-top: 2.25rem;
+      clip-path: polygon(0 7%, 100% 0, 100% 100%, 0 100%);
+    }
+
+    .hero-figure-index {
+      left: var(--gutter);
+      bottom: 1rem;
+      font-size: clamp(4rem, 18vw, 7rem);
+    }
+  }
+</style>

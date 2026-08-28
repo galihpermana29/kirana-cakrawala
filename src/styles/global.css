@@ -7,6 +7,8 @@
   --blue: #0082ca;
   --cyan: #00a7e0;
   --slate: #67788d;
+  /* Form validation only - the palette has no other red. */
+  --danger: #b3261e;
   --bg: #ffffff;
   --surface: #f4f5f7;
   --line: rgba(1, 30, 65, 0.12);

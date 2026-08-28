@@ -73,6 +73,16 @@ export interface ContactContent {
   phone: string;
 }
 
+/* tel: link from the printed number - digits only. Shared by the footer and
+   the Contact page so the two can never dial differently. */
+export function telHref(phone: string): string {
+  return `tel:${phone.replace(/[^\d+]/g, '')}`;
+}
+
+export function mailHref(email: string): string {
+  return `mailto:${email}`;
+}
+
 export interface HomeContent {
   companyName: string;
   brandAbbr: string;
@@ -130,7 +140,7 @@ export const home: HomeContent = {
     { label: 'What We Do', href: '/what-we-do' },
     { label: 'Partners', href: '/partners' },
     { label: 'News & Articles', href: '/news' },
-    { label: 'Contact Us', href: '/#contact' },
+    { label: 'Contact Us', href: '/contact' },
   ],
   hero: {
     eyebrow: 'AOG support, 24/7 - Jakarta HQ',
@@ -249,7 +259,7 @@ export const home: HomeContent = {
     label: 'Our Commitment',
     heading: 'Right Part. Right Solution. Right Time.',
     body: 'Keeping Aviation Moving.',
-    cta: { label: 'Contact Us', href: '#contact' },
+    cta: { label: 'Contact Us', href: '/contact' },
     image: {
       src: '/images/commitment-wing.jpg',
       alt: 'Aircraft wing over evening clouds at altitude',

@@ -1,0 +1,291 @@
+---
+import { home } from '../../content/home';
+import {
+  addressLines,
+  contactLabels,
+  directionsUrl,
+  mailHref,
+  mapEmbedUrl,
+  OFFICE_ANCHOR,
+  telHref,
+  type OfficeContent,
+} from '../../content/contact';
+
+interface Props {
+  content: OfficeContent;
+}
+
+const { content } = Astro.props;
+const lines = addressLines();
+---
+
+<!-- Where the site's one named location is: the address as a card beside
+     the map. The map geocodes the printed address, so the two cannot drift. -->
+<section class="section office" id={OFFICE_ANCHOR} data-office>
+  <div class="container">
+    <p class="section-label" data-office-label>{content.label}</p>
+    <div class="office-grid">
+      <div class="office-copy">
+        <div class="section-head">
+          <h2>{content.heading}</h2>
+          <p class="section-intro">{content.intro}</p>
+        </div>
+        <address class="office-card" data-office-card>
+          <p class="office-eyebrow">
+            <span class="office-dot" aria-hidden="true"></span>
+            <span>{content.name}</span>
+          </p>
+          <p class="office-address">
+            {lines.map((line) => <span class="address-line">{line}</span>)}
+            <span class="address-line">{content.country}</span>
+          </p>
+          <div class="office-lines">
+            <a class="office-line" href={mailHref(home.contact.email)}>
+              {home.contact.email}
+            </a>
+            <a class="office-line" href={telHref(home.contact.phone)}>
+              {home.contact.phone}
+            </a>
+          </div>
+          <a
+            class="btn btn-primary"
+            href={directionsUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {contactLabels.getDirections}<span class="btn-arrow" aria-hidden="true">›</span>
+          </a>
+        </address>
+      </div>
+
+      <figure class="office-map" data-office-map>
+        <iframe
+          src={mapEmbedUrl()}
+          title={contactLabels.mapTitle}
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          allowfullscreen
+        ></iframe>
+        <div class="map-tint" aria-hidden="true"></div>
+        <figcaption class="map-caption">
+          <span class="map-pin" aria-hidden="true"></span>
+          {lines[0]}
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-office]');
+  const label = document.querySelector('[data-office-label]');
+  const card = section?.querySelector<HTMLElement>('[data-office-card]');
+  const map = section?.querySelector<HTMLElement>('[data-office-map]');
+
+  function revealCopy(scope: Element, sectionLabel: Element) {
+    scrambleIn(sectionLabel, { trigger: scope });
+    revealUp('[data-office] .section-head > *', { trigger: scope, stagger: 0.09 });
+    if (card) {
+      revealUp(card.children, { trigger: scope, delay: 0.25, stagger: 0.06, y: 14, duration: 0.6 });
+    }
+  }
+
+  if (section && label && map) {
+    motionReady(section, {
+      desktop: () => {
+        revealCopy(section, label);
+        // The map slides in from the right as the copy settles - the hero
+        // figure's entrance, echoed.
+        gsap.from(map, {
+          autoAlpha: 0,
+          x: 50,
+          duration: 1,
+          ease: EASE,
+          scrollTrigger: { trigger: section, start: REVEAL_START },
+        });
+      },
+      mobile: () => {
+        revealCopy(section, label);
+        revealUp(map, { trigger: map, y: 36, duration: 0.8 });
+      },
+    });
+  }
+</script>
+
+<style>
+  .office-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .office-copy .section-head {
+    margin-bottom: clamp(1.75rem, 4vw, 2.5rem);
+  }
+
+  .office-card {
+    font-style: normal;
+    display: grid;
+    justify-items: start;
+    gap: 1.1rem;
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--orange);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    padding: 1.75rem 1.75rem 1.75rem 1.6rem;
+  }
+
+  .office-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  /* The hero eyebrow's pulsing pin, marking the one location the site names. */
+  .office-dot,
+  .map-pin {
+    position: relative;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--orange);
+  }
+
+  .office-dot::after,
+  .map-pin::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 50%;
+    border: 2px solid var(--orange);
+    animation: office-pulse 2s ease-out infinite;
+  }
+
+  @keyframes office-pulse {
+    0% {
+      transform: scale(0.6);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+
+  .office-address {
+    display: grid;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(1rem, 1.3vw, 1.15rem);
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    color: var(--navy);
+  }
+
+  .office-lines {
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .office-line {
+    color: var(--slate);
+    text-decoration: none;
+    font-size: 0.95rem;
+    overflow-wrap: anywhere;
+    transition: color 150ms ease;
+  }
+
+  .office-card .btn {
+    margin-top: 0.4rem;
+  }
+
+  .office-map {
+    position: relative;
+    margin: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    aspect-ratio: 4 / 3;
+  }
+
+  .office-map iframe {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    /* Muted toward the palette; the marker stays legible. */
+    filter: saturate(0.45);
+  }
+
+  /* Navy wash over the map that lifts as the cursor arrives - so the map
+     sits back in the page until it is wanted. Never blocks the map itself. */
+  .map-tint {
+    position: absolute;
+    inset: 0;
+    background: rgba(1, 30, 65, 0.1);
+    pointer-events: none;
+    transition: opacity 260ms var(--ease-out-quad);
+  }
+
+  .map-caption {
+    position: absolute;
+    left: 1rem;
+    bottom: 1rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--navy);
+    border-radius: 999px;
+    padding: 0.5rem 0.95rem 0.5rem 0.8rem;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .office-line:hover {
+      color: var(--blue);
+    }
+
+    .office-map:hover .map-tint {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .office-dot::after,
+    .map-pin::after {
+      animation: none;
+      opacity: 0;
+    }
+
+    .map-tint {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 1023.98px) {
+    .office-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .office-address {
+      font-size: 1.05rem;
+    }
+  }
+</style>

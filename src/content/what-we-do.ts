@@ -15,10 +15,10 @@ import {
 
 export const WHAT_WE_DO_PATH = '/what-we-do';
 
-/* Site-wide destinations the pillar pages link out to. About and Contact are
-   still homepage sections; when their own pages land (kirana-wsh, kirana-kga)
-   only these two entries change. */
-export const contactLink: NavItem = { label: 'Contact Us', href: '/#contact' };
+/* Site-wide destinations the inner pages link out to. Contact is its own
+   page; About is still a homepage section, and when its page lands
+   (kirana-wsh) only that entry changes. */
+export const contactLink: NavItem = { label: 'Contact Us', href: '/contact' };
 export const aboutLink: NavItem = { label: 'About Us', href: '/#about' };
 
 export interface MissionPoint {

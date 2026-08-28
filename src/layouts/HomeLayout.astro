@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { home } from '../content/home';
+import { home, mailHref, telHref } from '../content/home';
 
 interface Props {
   title?: string;
@@ -85,10 +85,10 @@ const isCurrent = (href: string) =>
         <div>
           <p class="footer-heading">Contact</p>
           <p class="footer-line">{home.contact.address}</p>
-          <a class="footer-link" href={`mailto:${home.contact.email}`}>
+          <a class="footer-link" href={mailHref(home.contact.email)}>
             {home.contact.email}
           </a>
-          <a class="footer-link" href={`tel:${home.contact.phone.replace(/[^\d+]/g, '')}`}>
+          <a class="footer-link" href={telHref(home.contact.phone)}>
             {home.contact.phone}
           </a>
         </div>

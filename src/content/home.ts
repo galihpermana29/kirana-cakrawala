@@ -51,12 +51,6 @@ export interface NetworkNode {
   yPct: number;
 }
 
-export interface NewsItem {
-  date: string;
-  title: string;
-  excerpt: string;
-}
-
 export interface ContactContent {
   address: string;
   email: string;
@@ -93,11 +87,12 @@ export interface HomeContent {
     /* Sits under a heavy navy overlay behind the band's copy. */
     image: SourcedImage;
   };
+  /* The teaser's head only - its cards are the newest articles in
+     src/content/news.ts, so the homepage and /news never drift. */
   news: {
     label: string;
     heading: string;
     intro: string;
-    items: NewsItem[];
     showAll: NavItem;
   };
   contact: ContactContent;
@@ -113,7 +108,7 @@ export const home: HomeContent = {
     { label: 'About Us', href: '/#about' },
     { label: 'What We Do', href: '/what-we-do' },
     { label: 'Partners', href: '/#ecosystem' },
-    { label: 'News & Articles', href: '/#news' },
+    { label: 'News & Articles', href: '/news' },
     { label: 'Contact Us', href: '/#contact' },
   ],
   hero: {
@@ -245,30 +240,7 @@ export const home: HomeContent = {
     intro:
       'Developments in aviation aftermarket capability, company ' +
       'milestones, and industry insights.',
-    items: [
-      {
-        date: '26.08.10',
-        title: 'Building Component MRO Capability',
-        excerpt:
-          'How repair, overhaul, and refurbishment extend component life ' +
-          'and maximize asset value.',
-      },
-      {
-        date: '26.08.03',
-        title: 'Optimizing AOG Response Across Asia',
-        excerpt:
-          'Sourcing the right part with the right lead time - keeping ' +
-          'aircraft available and operations ready.',
-      },
-      {
-        date: '26.07.28',
-        title: 'The Integrated Aftermarket Ecosystem',
-        excerpt:
-          'Why connecting OEMs, MROs, lessors, and operators creates value ' +
-          'across every transaction.',
-      },
-    ],
-    showAll: { label: 'Show All Articles', href: '#news' },
+    showAll: { label: 'Show All Articles', href: '/news' },
   },
   contact: {
     address:

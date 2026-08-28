@@ -1,0 +1,92 @@
+---
+import { newsLabels, NEWS_PATH, type Article } from '../../content/news';
+import type { SectionIntro } from '../../content/what-we-do';
+import ArticleCard from './ArticleCard.astro';
+
+interface Props {
+  head: SectionIntro;
+  items: Article[];
+}
+
+const { head, items } = Astro.props;
+---
+
+<!-- Cross-links at the foot of an article: more reading, and the way back
+     to the archive. -->
+<section class="section article-grid" id="more" data-article-grid>
+  <div class="container">
+    <p class="section-label" data-article-grid-label>{head.label}</p>
+    <div class="grid-head">
+      <div class="section-head">
+        <h2>{head.heading}</h2>
+        <p class="section-intro">{head.intro}</p>
+      </div>
+      <a class="btn btn-ghost" href={NEWS_PATH}>
+        {newsLabels.allArticles}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
+    </div>
+    <div class="grid-cards">
+      {items.map((article) => <ArticleCard article={article} />)}
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-article-grid]');
+  const label = document.querySelector('[data-article-grid-label]');
+
+  if (section && label) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-article-grid] .grid-head > *', { trigger: section, stagger: 0.09 });
+      gsap.from('[data-article-grid] [data-article-card]', {
+        autoAlpha: 0,
+        y: 34,
+        duration: 0.7,
+        ease: EASE,
+        stagger: 0.1,
+        scrollTrigger: { trigger: '[data-article-grid] .grid-cards', start: REVEAL_START },
+      });
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .article-grid {
+    background: var(--surface);
+  }
+
+  .grid-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .grid-head .section-head {
+    margin-bottom: 0;
+  }
+
+  .grid-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1023.98px) {
+    .grid-cards {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 639.98px) {
+    .grid-cards {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

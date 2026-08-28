@@ -1,0 +1,339 @@
+---
+import {
+  articleCount,
+  categories,
+  categoryLabels,
+  newsLabels,
+  pad,
+  type Article,
+} from '../../content/news';
+import type { SectionIntro } from '../../content/what-we-do';
+import ArticleCard from './ArticleCard.astro';
+
+interface Props {
+  head: SectionIntro;
+  /* Newest first; the first renders featured. */
+  articles: Article[];
+}
+
+const { head, articles } = Astro.props;
+---
+
+<!-- Category strip in the pillar switcher's position, then the archive.
+     Filtering is client-side over the rendered cards: the page ships every
+     article and the strip only hides what does not match. -->
+<div class="filter" data-filter>
+  <div class="container filter-inner">
+    <p class="filter-label">{newsLabels.filter}</p>
+    <div class="filter-pills" role="group" aria-label="Filter articles by category">
+      <button
+        class="filter-pill active"
+        type="button"
+        aria-pressed="true"
+        data-filter-pill="all"
+      >
+        <span class="pill-count" aria-hidden="true">{pad(articleCount())}</span>
+        {newsLabels.all}
+      </button>
+      {
+        categories.map((category) => (
+          <button
+            class="filter-pill"
+            type="button"
+            aria-pressed="false"
+            data-filter-pill={category}
+          >
+            <span class="pill-count" aria-hidden="true">
+              {pad(articleCount(category))}
+            </span>
+            {categoryLabels[category]}
+          </button>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<section class="section feed" id="articles" data-feed>
+  <div class="container">
+    <p class="section-label" data-feed-label>{head.label}</p>
+    <div class="feed-head">
+      <div class="section-head">
+        <h2>{head.heading}</h2>
+        <p class="section-intro">{head.intro}</p>
+      </div>
+      <p class="feed-count" aria-live="polite">
+        <span class="feed-count-number" data-feed-count>{pad(articles.length)}</span>
+        {newsLabels.articles}
+      </p>
+    </div>
+    <div class="feed-grid" data-feed-grid>
+      {
+        articles.map((article, i) => (
+          <ArticleCard
+            article={article}
+            featured={i === 0}
+            loading={i < 3 ? 'eager' : 'lazy'}
+          />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<script>
+  import {
+    gsap,
+    motionReady,
+    revealUp,
+    scrambleIn,
+    ScrollTrigger,
+    EASE,
+    REVEAL_START,
+  } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-feed]');
+  const label = document.querySelector('[data-feed-label]');
+  const grid = document.querySelector<HTMLElement>('[data-feed-grid]');
+  const count = document.querySelector('[data-feed-count]');
+  const pills = Array.from(
+    document.querySelectorAll<HTMLButtonElement>('[data-filter-pill]'),
+  );
+  const cards = Array.from(
+    document.querySelectorAll<HTMLElement>('[data-feed-grid] [data-article-card]'),
+  );
+
+  // Filtering is state, not motion: it runs for every visitor. Only the
+  // re-entrance of the surviving cards is registered through motionReady.
+  let animateFilter: ((visible: HTMLElement[]) => void) | undefined;
+
+  function applyFilter(category: string) {
+    pills.forEach((pill) => {
+      const on = pill.dataset.filterPill === category;
+      pill.classList.toggle('active', on);
+      pill.setAttribute('aria-pressed', String(on));
+    });
+    const visible: HTMLElement[] = [];
+    cards.forEach((card) => {
+      const show = category === 'all' || card.dataset.category === category;
+      card.hidden = !show;
+      if (show) visible.push(card);
+    });
+    if (count) count.textContent = String(visible.length).padStart(2, '0');
+    animateFilter?.(visible);
+  }
+
+  pills.forEach((pill) => {
+    pill.addEventListener('click', () => {
+      if (pill.classList.contains('active')) return;
+      applyFilter(pill.dataset.filterPill ?? 'all');
+    });
+  });
+
+  if (section && label && grid) {
+    const enter = () => {
+      scrambleIn(label, { trigger: section });
+      revealUp('[data-feed] .feed-head > *', { trigger: section, stagger: 0.09 });
+      let entrance: gsap.core.Tween | undefined = gsap.from(cards, {
+        autoAlpha: 0,
+        y: 34,
+        duration: 0.7,
+        ease: EASE,
+        stagger: 0.08,
+        scrollTrigger: { trigger: grid, start: REVEAL_START },
+      });
+      animateFilter = (visible) => {
+        // A filter click supersedes the scroll entrance: finish it so no
+        // card is left mid-fade, then settle the survivors in quickly.
+        entrance?.progress(1).kill();
+        entrance = undefined;
+        // The grid just changed height, so every trigger below it (the CTA
+        // band's entrance) is now at the wrong scroll position.
+        ScrollTrigger.refresh();
+        gsap.fromTo(
+          visible,
+          { autoAlpha: 0, y: 14 },
+          { autoAlpha: 1, y: 0, duration: 0.28, ease: EASE, stagger: 0.03, overwrite: true },
+        );
+      };
+      return () => {
+        animateFilter = undefined;
+      };
+    };
+    motionReady(section, { desktop: enter, mobile: enter });
+  }
+</script>
+
+<style>
+  .filter {
+    border-block: 1px solid var(--line);
+    background: var(--bg);
+  }
+
+  .filter-inner {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    min-height: 4rem;
+  }
+
+  .filter-label {
+    flex: 0 0 auto;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.8rem;
+    color: var(--orange);
+  }
+
+  .filter-label::before {
+    content: '/ ';
+  }
+
+  .filter-pills {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding-block: 0.75rem;
+  }
+
+  /* Twin of the pillar switcher's pills, as buttons: state lives on the
+     page, not in the URL. */
+  .filter-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--navy);
+    background: transparent;
+    border: 1px solid rgba(1, 30, 65, 0.22);
+    border-radius: 999px;
+    padding: 0.5rem 1.05rem 0.5rem 0.85rem;
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .pill-count {
+    color: var(--orange);
+    font-weight: 400;
+    letter-spacing: 0.1em;
+  }
+
+  .filter-pill:active {
+    transform: scale(0.95);
+  }
+
+  .filter-pill.active {
+    background: var(--orange);
+    border-color: var(--orange);
+    color: var(--navy);
+  }
+
+  .filter-pill.active .pill-count {
+    color: var(--navy);
+  }
+
+  .filter-pill:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .filter-pill:not(.active):hover {
+      border-color: var(--navy);
+      background: rgba(1, 30, 65, 0.05);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .filter-pill,
+    .filter-pill:active {
+      transform: none;
+    }
+  }
+
+  .feed-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-bottom: clamp(2rem, 5vw, 3rem);
+  }
+
+  .feed-head .section-head {
+    margin-bottom: 0;
+  }
+
+  .feed-count {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    color: var(--slate);
+    padding-bottom: 0.35rem;
+  }
+
+  .feed-count-number {
+    color: var(--navy);
+    font-weight: 700;
+    margin-right: 0.25rem;
+  }
+
+  .feed-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 1023.98px) {
+    .feed-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 767.98px) {
+    /* Phones: one scrollable row, snapping pill by pill. */
+    .filter-inner {
+      align-items: stretch;
+      flex-direction: column;
+      gap: 0;
+      padding-block: 0.9rem;
+    }
+
+    .filter-pills {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      scroll-padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+      scrollbar-width: none;
+      padding-block: 0.6rem 0.2rem;
+      margin-inline: calc(-1 * clamp(1.25rem, 4vw, 2.5rem));
+      padding-inline: clamp(1.25rem, 4vw, 2.5rem);
+    }
+
+    .filter-pills::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-pill {
+      scroll-snap-align: start;
+      flex: 0 0 auto;
+    }
+  }
+
+  @media (max-width: 639.98px) {
+    .feed-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

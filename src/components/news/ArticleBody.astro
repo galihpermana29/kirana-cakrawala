@@ -1,0 +1,503 @@
+---
+import {
+  adjacentArticles,
+  categoryLabels,
+  longDate,
+  newsLabels,
+  relatedPillar,
+  type Article,
+} from '../../content/news';
+
+interface Props {
+  article: Article;
+}
+
+const { article } = Astro.props;
+const pillar = relatedPillar(article);
+const { newer, older } = adjacentArticles(article);
+---
+
+<!-- Reading progress, desktop only: a hairline that fills across the top
+     as the body scrolls by. -->
+<div class="progress" aria-hidden="true">
+  <div class="progress-bar" data-progress-bar></div>
+</div>
+
+<section class="section article-body" data-article-body>
+  <div class="container body-grid">
+    <aside class="body-aside" data-body-aside>
+      <dl class="meta-list">
+        <div class="meta-row">
+          <dt>{newsLabels.published}</dt>
+          <dd><time datetime={article.date}>{longDate(article.date)}</time></dd>
+        </div>
+        <div class="meta-row">
+          <dt>{newsLabels.category}</dt>
+          <dd>{categoryLabels[article.category]}</dd>
+        </div>
+        <div class="meta-row">
+          <dt>{newsLabels.readingTime}</dt>
+          <dd>{article.readingMinutes} {newsLabels.minRead}</dd>
+        </div>
+        {
+          pillar && (
+            <div class="meta-row">
+              <dt>{newsLabels.relatedCapability}</dt>
+              <dd>
+                <a class="aside-link" href={pillar.href}>
+                  {pillar.label}
+                  <span class="btn-arrow" aria-hidden="true">›</span>
+                </a>
+              </dd>
+            </div>
+          )
+        }
+      </dl>
+      <!-- Share needs the page's own URL, which is only known at runtime
+           (no configured domain yet), so the block stays hidden until the
+           script has filled the links in. -->
+      <div class="share" hidden data-share-block>
+        <p class="share-label">{newsLabels.share}</p>
+        <div class="share-actions">
+          <button
+            class="share-btn"
+            type="button"
+            data-share="copy"
+            data-label={newsLabels.copyLink}
+            data-copied={newsLabels.copied}
+          >
+            <span data-share-copy-label aria-live="polite">{newsLabels.copyLink}</span>
+          </button>
+          <a
+            class="share-btn"
+            data-share="linkedin"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${newsLabels.shareOn} LinkedIn`}
+          >
+            LinkedIn
+          </a>
+          <a
+            class="share-btn"
+            data-share="x"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${newsLabels.shareOn} X`}
+          >
+            X
+          </a>
+        </div>
+      </div>
+    </aside>
+
+    <div class="prose" data-prose>
+      {
+        article.body.map((block) => {
+          switch (block.type) {
+            case 'heading':
+              return <h2>{block.text}</h2>;
+            case 'list':
+              return (
+                <ul>
+                  {block.items.map((item) => (
+                    <li>{item}</li>
+                  ))}
+                </ul>
+              );
+            case 'quote':
+              return (
+                <blockquote class="pullquote">
+                  <p>{block.text}</p>
+                  {block.cite && <footer>{block.cite}</footer>}
+                </blockquote>
+              );
+            default:
+              return <p>{block.text}</p>;
+          }
+        })
+      }
+      <nav class="article-nav" aria-label="Adjacent articles" data-article-nav>
+        {
+          newer && (
+            <a class="nav-link nav-newer" href={newer.href}>
+              <span class="nav-label">‹ {newsLabels.newer}</span>
+              <span class="nav-title">{newer.title}</span>
+            </a>
+          )
+        }
+        {
+          older && (
+            <a class="nav-link nav-older" href={older.href}>
+              <span class="nav-label">{newsLabels.older} ›</span>
+              <span class="nav-title">{older.title}</span>
+            </a>
+          )
+        }
+      </nav>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-article-body]');
+  const aside = document.querySelector<HTMLElement>('[data-body-aside]');
+  const prose = document.querySelector<HTMLElement>('[data-prose]');
+  const bar = document.querySelector<HTMLElement>('[data-progress-bar]');
+
+  // State, not motion: the share block runs for every visitor.
+  const pageUrl = encodeURIComponent(window.location.href);
+  const pageTitle = encodeURIComponent(document.title);
+  document.querySelectorAll<HTMLAnchorElement>('a[data-share]').forEach((link) => {
+    if (link.dataset.share === 'linkedin') {
+      link.href = `https://www.linkedin.com/sharing/share-offsite/?url=${pageUrl}`;
+    } else if (link.dataset.share === 'x') {
+      link.href = `https://twitter.com/intent/tweet?url=${pageUrl}&text=${pageTitle}`;
+    }
+  });
+  const shareBlock = document.querySelector<HTMLElement>('[data-share-block]');
+  if (shareBlock) shareBlock.hidden = false;
+
+  const copy = document.querySelector<HTMLButtonElement>('button[data-share="copy"]');
+  const copyLabel = copy?.querySelector('[data-share-copy-label]');
+  let resetTimer: number | undefined;
+  copy?.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+    } catch {
+      return;
+    }
+    copy.classList.add('copied');
+    if (copyLabel) copyLabel.textContent = copy.dataset.copied ?? '';
+    window.clearTimeout(resetTimer);
+    resetTimer = window.setTimeout(() => {
+      copy.classList.remove('copied');
+      if (copyLabel) copyLabel.textContent = copy.dataset.label ?? '';
+    }, 1800);
+  });
+
+  if (section && prose) {
+    const enter = () => {
+      if (aside) {
+        revealUp(aside.querySelectorAll('.meta-row, .share'), {
+          trigger: aside,
+          stagger: 0.06,
+          y: 14,
+          duration: 0.6,
+        });
+      }
+      // Each block settles in as it is reached, so a long read keeps moving.
+      Array.from(prose.children).forEach((block) => {
+        revealUp(block, { trigger: block, y: 18, duration: 0.6 });
+      });
+    };
+    motionReady(section, {
+      desktop: () => {
+        enter();
+        if (bar) {
+          gsap.fromTo(
+            bar,
+            { scaleX: 0 },
+            {
+              scaleX: 1,
+              ease: 'none',
+              scrollTrigger: { trigger: prose, start: 'top 25%', end: 'bottom 90%', scrub: 0.3 },
+            },
+          );
+        }
+      },
+      mobile: enter,
+    });
+  }
+</script>
+
+<style>
+  .progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 30;
+    pointer-events: none;
+  }
+
+  .progress-bar {
+    height: 100%;
+    background: var(--orange);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .article-body {
+    padding-top: clamp(3rem, 6vw, 5rem);
+  }
+
+  .body-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 16rem) minmax(0, 44rem);
+    gap: clamp(2.5rem, 6vw, 5.5rem);
+    align-items: start;
+  }
+
+  .body-aside {
+    position: sticky;
+    top: 5.75rem;
+    display: grid;
+    gap: 1.75rem;
+  }
+
+  .meta-list {
+    display: grid;
+  }
+
+  .meta-row {
+    display: grid;
+    gap: 0.3rem;
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .meta-row:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .meta-row dt,
+  .share-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.7rem;
+    color: var(--slate);
+  }
+
+  .meta-row dd {
+    font-weight: 500;
+    font-size: 0.95rem;
+  }
+
+  .aside-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--blue);
+    text-decoration: none;
+    transition: color 150ms ease;
+  }
+
+  .share {
+    display: grid;
+    gap: 0.75rem;
+  }
+
+  .share[hidden] {
+    display: none;
+  }
+
+  .share-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Small ghost pills; "Copy link" flips solid navy while it confirms. */
+  .share-btn {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--navy);
+    background: transparent;
+    border: 1px solid rgba(1, 30, 65, 0.25);
+    border-radius: 999px;
+    padding: 0.45rem 0.9rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      background 160ms ease,
+      border-color 160ms ease,
+      color 160ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .share-btn:active {
+    transform: scale(0.95);
+  }
+
+  .share-btn.copied {
+    background: var(--navy);
+    border-color: var(--navy);
+    color: #fff;
+  }
+
+  .share-btn:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .aside-link:hover {
+      color: var(--orange);
+    }
+
+    .aside-link:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+
+    .share-btn:not(.copied):hover {
+      border-color: var(--navy);
+      background: rgba(1, 30, 65, 0.05);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .share-btn,
+    .share-btn:active {
+      transform: none;
+    }
+
+    .aside-link:hover .btn-arrow {
+      transform: none;
+    }
+  }
+
+  .prose {
+    font-size: 1.05rem;
+    line-height: 1.75;
+  }
+
+  .prose > * + * {
+    margin-top: 1.25rem;
+  }
+
+  .prose h2 {
+    font-size: clamp(1.15rem, 1.6vw, 1.35rem);
+    line-height: 1.3;
+    margin-top: 2.5rem;
+  }
+
+  .prose ul {
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .prose li {
+    position: relative;
+    padding-left: 1.5rem;
+  }
+
+  /* The section-label slash as list marker. */
+  .prose li::before {
+    content: '/';
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--orange);
+  }
+
+  .pullquote {
+    border-left: 2px solid var(--orange);
+    padding: 0.25rem 0 0.25rem clamp(1.25rem, 3vw, 2rem);
+    margin-block: 2.25rem;
+  }
+
+  .pullquote p {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  .pullquote footer {
+    margin-top: 0.75rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    color: var(--slate);
+  }
+
+  .pullquote footer::before {
+    content: '/ ';
+    color: var(--orange);
+  }
+
+  .article-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .nav-link {
+    display: grid;
+    gap: 0.4rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .nav-newer {
+    grid-column: 1;
+  }
+
+  .nav-older {
+    grid-column: 2;
+    text-align: right;
+    justify-items: end;
+  }
+
+  .nav-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.72rem;
+    color: var(--orange);
+  }
+
+  .nav-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    transition: color 150ms ease;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .nav-link:hover .nav-title {
+      color: var(--blue);
+    }
+  }
+
+  @media (max-width: 1023.98px) {
+    .body-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+
+    .body-aside {
+      position: static;
+    }
+
+    .article-nav {
+      grid-template-columns: 1fr;
+    }
+
+    .nav-older {
+      grid-column: auto;
+      text-align: left;
+      justify-items: start;
+    }
+  }
+</style>

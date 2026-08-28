@@ -12,6 +12,11 @@ Update this file whenever an image is added, replaced, or removed.
 | `pillar-network.jpg` | [Unsplash - Open cargo hold of a freighter with netted pallets, by Sevcan Alkan](https://unsplash.com/photos/D1H7jEwlWMU) | Unsplash License (free; attribution appreciated, not required) |
 | `hero-aircraft.jpg` | [Wikimedia Commons - In For Landing (airliner silhouette)](https://commons.wikimedia.org/wiki/File:In_For_Landing_(191942727).jpeg) | CC BY 3.0 (attribution required if kept for launch; no visible livery) |
 | `commitment-wing.jpg` | [Wikimedia Commons - Evening light at 25,000 ft (M McBey)](https://commons.wikimedia.org/wiki/File:Evening_light_at_25,000_ft_(Explored)_-_Flickr_-_M_McBey.jpg) | CC BY 2.0 (attribution required if kept for launch) |
+| `news-hero.jpg` | [Unsplash - Widebody turbofan under a wing inside a maintenance hangar, by 鱼 鱼](https://unsplash.com/photos/ERed5HLKSYA) | Unsplash License (free; attribution appreciated, not required) |
+| `news-aog-response.jpg` | [Unsplash - Engine nacelle and landing gear on a night ramp, by Jacob Hamm](https://unsplash.com/photos/5l3tj1LMBB8) | Unsplash License (free; attribution appreciated, not required) |
+| `news-aftermarket-ecosystem.jpg` | [Unsplash - Apron at sunset with silhouetted airliners, by Yeray Sánchez](https://unsplash.com/photos/ZKEjw7oLmQQ) | Unsplash License (free; attribution appreciated, not required) |
+| `news-quality-governance.jpg` | [Unsplash - Airliner glass cockpit at dusk, by Andrés Dallimonti](https://unsplash.com/photos/kjqTlMHLci4) | Unsplash License (free; attribution appreciated, not required) |
+| `news-introducing-kca.jpg` | [Unsplash - Airliner silhouetted against the sun after takeoff, by Sean Davis](https://unsplash.com/photos/8FwJg9--peo) | Unsplash License (free; attribution appreciated, not required) |
 
 The hero background is a generated canvas gradient, not an image.
 The dotted world map is generated at build time by the `dotted-map` package.
@@ -19,3 +24,5 @@ The ecosystem marquee shows partner-category wordmarks, not company logos - real
 Removed 2026-08-27: the four military `domain-*.jpg` images from the KCN-derived draft (content pivoted to aviation aftermarket per `docs/positioning.md`).
 Replaced 2026-08-28: `pillar-mro.jpg`, `pillar-technical.jpg`, and `pillar-network.jpg` swapped from U.S. military / DVIDS photos to civil-aviation, brand-free Unsplash images - the pillar pages (`/what-we-do/*`) promote them to full-bleed heroes, and the site must carry no military imagery or airline branding.
 `hero-aircraft.jpg` is also used as the `/what-we-do` hub hero.
+Added 2026-08-28: the five `news-*.jpg` images for `/news` (listing hero plus four article pictures), all civil-aviation Unsplash photos checked for airline branding before adoption.
+The Component MRO and Technical Services articles reuse `pillar-mro.jpg` and `pillar-technical.jpg` rather than shipping duplicates of the same photos.

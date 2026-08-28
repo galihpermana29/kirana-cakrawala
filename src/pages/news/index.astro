@@ -1,0 +1,38 @@
+---
+import ArticleFeed from '../../components/news/ArticleFeed.astro';
+import PillarCta from '../../components/what-we-do/PillarCta.astro';
+import PillarHero from '../../components/what-we-do/PillarHero.astro';
+import { home } from '../../content/home';
+import { articles, newsIndex, newsLabels } from '../../content/news';
+import { contactLink, ctaImage, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+import HomeLayout from '../../layouts/HomeLayout.astro';
+
+// The News & Articles listing: the nav's landing point and the full archive,
+// newest first. Shares the What We Do hub's hero and CTA band so every inner
+// page opens and closes the same way.
+const latest = articles[0]!;
+---
+
+<HomeLayout
+  title={`${newsIndex.title} - ${home.companyName}`}
+  description={newsIndex.standfirst}
+>
+  <PillarHero
+    crumb={home.brandAbbr}
+    eyebrow={newsIndex.title}
+    heading={newsIndex.heading}
+    standfirst={newsIndex.standfirst}
+    image={newsIndex.image}
+    primary={{ label: newsLabels.readLatest, href: latest.href }}
+    secondary={contactLink}
+  />
+  <ArticleFeed head={newsIndex.feed} articles={articles} />
+  <PillarCta
+    label={newsIndex.cta.label}
+    heading={newsIndex.cta.heading}
+    body={newsIndex.cta.body}
+    primary={contactLink}
+    secondary={{ label: home.whatWeDo.label, href: WHAT_WE_DO_PATH }}
+    image={ctaImage}
+  />
+</HomeLayout>

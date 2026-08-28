@@ -11,12 +11,15 @@ const { whoWeAre } = home;
     <div class="who-body-block">
       <p class="who-body">{whoWeAre.body}</p>
       <p class="who-statement" data-who-statement>{whoWeAre.statement}</p>
+      <a class="btn btn-ghost who-link" href={whoWeAre.link.href} data-who-link>
+        {whoWeAre.link.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      </a>
     </div>
   </div>
 </section>
 
 <script>
-  import { gsap, SplitText, motionReady, revealUp, scrambleIn, REVEAL_START } from '../../lib/motion';
+  import { gsap, lightWords, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
 
   const section = document.querySelector('[data-who]');
   const statement = document.querySelector('[data-who-statement]');
@@ -29,10 +32,13 @@ const { whoWeAre } = home;
       scaleX: 0,
       transformOrigin: 'left center',
       duration: 0.8,
-      ease: 'power3.out',
+      ease: EASE,
       scrollTrigger: { trigger: section, start: REVEAL_START },
     });
     revealUp('[data-who] .who-body', { trigger: section, delay: 0.15 });
+    // The link into About enters on its own trigger, under the statement.
+    const link = section.querySelector('[data-who-link]');
+    if (link) revealUp(link, { trigger: link, y: 16, duration: 0.6 });
   }
 
   if (section && statement && label) {
@@ -40,38 +46,13 @@ const { whoWeAre } = home;
       desktop: () => {
         scrambleIn(label, { trigger: section });
         revealFrame();
-        const split = new SplitText(statement, { type: 'words' });
-        gsap.fromTo(
-          split.words,
-          { color: 'rgba(103, 120, 141, 0.35)' },
-          {
-            color: 'var(--navy)',
-            stagger: 0.08,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: statement,
-              start: 'top 70%',
-              end: 'bottom 45%',
-              scrub: 0.4,
-            },
-          },
-        );
+        // The vision lights up word by word as it is read.
+        lightWords(statement, { scrub: true });
       },
       mobile: () => {
         scrambleIn(label, { trigger: section });
         revealFrame();
-        const split = new SplitText(statement, { type: 'words' });
-        gsap.fromTo(
-          split.words,
-          { color: 'rgba(103, 120, 141, 0.35)' },
-          {
-            color: 'var(--navy)',
-            stagger: 0.05,
-            duration: 0.25,
-            ease: 'none',
-            scrollTrigger: { trigger: statement, start: REVEAL_START },
-          },
-        );
+        lightWords(statement);
       },
     });
   }
@@ -103,5 +84,9 @@ const { whoWeAre } = home;
     letter-spacing: 0.01em;
     color: var(--navy);
     max-width: 62rem;
+  }
+
+  .who-link {
+    margin-top: 2rem;
   }
 </style>

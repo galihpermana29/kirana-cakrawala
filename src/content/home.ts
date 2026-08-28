@@ -26,6 +26,8 @@ export interface WhoWeAreContent {
   /* Scroll-lit word by word. */
   statement: string;
   body: string;
+  /* Into the About Us page, where the full positioning lives. */
+  link: NavItem;
 }
 
 export type PillarId = 'parts' | 'mro' | 'technical' | 'network';
@@ -133,10 +135,10 @@ export const home: HomeContent = {
   companyName: 'Kirana Cakrawala',
   brandAbbr: 'KCA',
   tagline: 'Your Integrated Aviation Aftermarket Partner',
-  // Anchors are written absolute (/#about) so the shared header and footer
-  // resolve from inner pages too; each becomes a real route as its page lands.
+  // Every entry is a real route now; hrefs stay absolute so the shared
+  // header and footer resolve from inner pages too.
   nav: [
-    { label: 'About Us', href: '/#about' },
+    { label: 'About Us', href: '/about' },
     { label: 'What We Do', href: '/what-we-do' },
     { label: 'Partners', href: '/partners' },
     { label: 'News & Articles', href: '/news' },
@@ -148,7 +150,7 @@ export const home: HomeContent = {
     subline:
       'Connecting Parts, MRO, Technical Expertise & Global Supply Networks.',
     ctaPrimary: { label: 'Explore Our Capabilities', href: '#pillars' },
-    ctaSecondary: { label: 'About Us', href: '#about' },
+    ctaSecondary: { label: 'About Us', href: '/about' },
     image: {
       src: '/images/galih-2.jpg',
       alt: 'Fighter jet banking away with afterburners lit against a blue sky',
@@ -166,6 +168,7 @@ export const home: HomeContent = {
       'KCA is your integrated aviation aftermarket partner, connecting ' +
       'parts, MRO, technical expertise, and global supply networks for ' +
       'airlines, operators, MROs, and aviation organizations.',
+    link: { label: 'More About KCA', href: '/about' },
   },
   whatWeDo: {
     label: 'What We Do',

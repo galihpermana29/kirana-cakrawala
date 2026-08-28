@@ -1,0 +1,343 @@
+---
+import { MISSION_ANCHOR, pad, type MissionContent } from '../../content/about';
+
+interface Props {
+  content: MissionContent;
+}
+
+const { content } = Astro.props;
+const total = pad(content.items.length);
+---
+
+<!-- All seven mission points in full - the homepage deliberately shows only
+     the vision, so this list is their home. On desktop the head stays put
+     while the list scrolls past it, and the row at the reading line is the
+     one lit; the counter and rail beside the head follow the reader. -->
+<section class="section mission" id={MISSION_ANCHOR} data-mission>
+  <div class="container mission-grid">
+    <div class="mission-side">
+      <div class="mission-side-inner">
+        <p class="section-label" data-mission-label>{content.label}</p>
+        <div class="section-head mission-head">
+          <h2>{content.heading}</h2>
+          <p class="section-intro">{content.intro}</p>
+        </div>
+        <div class="mission-progress" data-mission-progress aria-hidden="true">
+          <p class="mission-counter">
+            <span class="counter-current" data-mission-current>{pad(1)}</span>
+            <span class="counter-sep">/</span>
+            <span class="counter-total">{total}</span>
+          </p>
+          <div class="progress-rail">
+            <span class="progress-fill" data-mission-fill></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ol class="mission-list" data-mission-list>
+      {
+        content.items.map((mission) => (
+          <li class="mission-item" data-mission-item>
+            <p class="mission-index" aria-hidden="true">{pad(mission.number)}</p>
+            <div class="mission-copy">
+              <h3 class="mission-title">{mission.title}</h3>
+              <p class="mission-text">{mission.text}</p>
+              {mission.link && (
+                <a class="mission-more" href={mission.link.href}>
+                  {mission.link.label}
+                  <span class="btn-arrow" aria-hidden="true">›</span>
+                </a>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<script>
+  import { gsap, motionReady, revealUp, scrambleIn, ScrollTrigger, EASE } from '../../lib/motion';
+
+  const section = document.querySelector<HTMLElement>('[data-mission]');
+  const label = section?.querySelector('[data-mission-label]');
+  const list = section?.querySelector<HTMLElement>('[data-mission-list]');
+  const items = Array.from(section?.querySelectorAll<HTMLElement>('[data-mission-item]') ?? []);
+  const current = section?.querySelector<HTMLElement>('[data-mission-current]');
+  const fill = section?.querySelector<HTMLElement>('[data-mission-fill]');
+
+  function revealHead() {
+    if (!section) return;
+    revealUp('[data-mission] .mission-head > *', { trigger: section, stagger: 0.09 });
+  }
+
+  // Exactly one row is lit at a time: the last one whose top has crossed the
+  // reading line. The counter ticks over with it.
+  function setActive(index: number) {
+    const item = items[index];
+    if (!item || item.classList.contains('active')) return;
+    items.forEach((row, i) => row.classList.toggle('active', i === index));
+    if (current) {
+      current.textContent = item.querySelector('.mission-index')?.textContent ?? '';
+      gsap.fromTo(
+        current,
+        { y: 8, autoAlpha: 0 },
+        { y: 0, autoAlpha: 1, duration: 0.28, ease: EASE, overwrite: true },
+      );
+    }
+  }
+
+  if (section && label && list && items.length) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        revealUp('[data-mission-progress]', { trigger: section, delay: 0.3, y: 14, duration: 0.6 });
+        revealUp(items, { trigger: list, stagger: 0.08, y: 26 });
+
+        // Read-along: rows the reader has not reached sit back. The class
+        // is added here, not in the markup, so a static or reduce-motion
+        // page shows every row in full.
+        section.classList.add('is-reading');
+        items.forEach((row) => row.classList.remove('active'));
+        items[0]!.classList.add('active');
+        const triggers = items.map((row, i) =>
+          ScrollTrigger.create({
+            trigger: row,
+            start: 'top 62%',
+            end: 'bottom 62%',
+            onEnter: () => setActive(i),
+            onEnterBack: () => setActive(i),
+          }),
+        );
+
+        // The rail fills as the list is read - transform only, scroll-tied.
+        let fillTween: gsap.core.Tween | undefined;
+        if (fill) {
+          fillTween = gsap.fromTo(
+            fill,
+            { scaleX: 0 },
+            {
+              scaleX: 1,
+              ease: 'none',
+              transformOrigin: 'left center',
+              scrollTrigger: { trigger: list, start: 'top 62%', end: 'bottom 62%', scrub: 0.3 },
+            },
+          );
+        }
+
+        return () => {
+          triggers.forEach((trigger) => trigger.kill());
+          fillTween?.scrollTrigger?.kill();
+          fillTween?.kill();
+          section.classList.remove('is-reading');
+          items.forEach((row) => row.classList.remove('active'));
+        };
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealHead();
+        // Stacked rows each enter on their own trigger so the last is not
+        // spent while still below the fold.
+        items.forEach((row) => revealUp(row, { trigger: row, y: 22, duration: 0.7 }));
+      },
+    });
+  }
+</script>
+
+<style>
+  .mission-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.45fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  /* Clears the sticky header with a little air. */
+  .mission-side-inner {
+    position: sticky;
+    top: 6rem;
+  }
+
+  .mission-head {
+    margin-bottom: 2.25rem;
+  }
+
+  /* The counter and rail only mean something with the read-along effect,
+     so they appear with it (desktop, script-added) and never on a static,
+     reduce-motion, or phone page. */
+  .mission-progress {
+    display: none;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1.25rem;
+    max-width: 20rem;
+  }
+
+  .mission-counter {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.45rem;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.5rem;
+    line-height: 1;
+    letter-spacing: 0.02em;
+    color: var(--slate);
+  }
+
+  .counter-current {
+    display: inline-block;
+    color: var(--orange);
+  }
+
+  .counter-sep {
+    font-weight: 400;
+    font-size: 1rem;
+  }
+
+  .counter-total {
+    font-size: 1rem;
+  }
+
+  .progress-rail {
+    position: relative;
+    height: 2px;
+    background: var(--line);
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    position: absolute;
+    inset: 0;
+    background: var(--orange);
+    transform: scaleX(0);
+    transform-origin: left center;
+  }
+
+  .is-reading .mission-progress {
+    display: grid;
+  }
+
+  .mission-list {
+    list-style: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .mission-item {
+    display: grid;
+    grid-template-columns: 5.5rem minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-block: clamp(1.75rem, 3vw, 2.5rem);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mission-index {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2rem, 3vw, 2.75rem);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--orange);
+    transition: color 320ms var(--ease-out-quad);
+  }
+
+  .mission-copy {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+  }
+
+  .mission-title {
+    font-size: clamp(1.05rem, 1.5vw, 1.25rem);
+  }
+
+  .mission-text {
+    color: var(--slate);
+    max-width: 40rem;
+  }
+
+  /* Out to the page that expands the point. */
+  .mission-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.25rem;
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--blue);
+    text-decoration: none;
+    transition:
+      color 150ms ease,
+      transform 120ms var(--ease-out-quad);
+  }
+
+  .mission-more:active {
+    transform: scale(0.97);
+  }
+
+  /* Read-along (desktop, added by the script): unread rows sit back; the
+     row at the reading line is in full. */
+  .is-reading .mission-item > * {
+    transition: opacity 320ms var(--ease-out-quad);
+  }
+
+  .is-reading .mission-item:not(.active) > * {
+    opacity: 0.4;
+  }
+
+  .is-reading .mission-item:not(.active) .mission-index {
+    color: var(--slate);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    /* Pointing at a row brings it forward before the scroll does. */
+    .is-reading .mission-item:hover > * {
+      opacity: 1;
+    }
+
+    .mission-more:hover {
+      color: var(--orange);
+    }
+
+    .mission-more:hover .btn-arrow {
+      transform: translateX(4px);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mission-more,
+    .mission-more:active {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 1023.98px) {
+    .mission-grid {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .mission-side-inner {
+      position: static;
+    }
+
+    .mission-head {
+      margin-bottom: 1.5rem;
+    }
+
+    .mission-item {
+      grid-template-columns: 3.5rem minmax(0, 1fr);
+      gap: 1rem;
+    }
+
+    .mission-index {
+      font-size: 1.6rem;
+      padding-top: 0.15rem;
+    }
+  }
+</style>

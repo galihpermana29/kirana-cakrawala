@@ -1,0 +1,204 @@
+---
+import type { IntroContent } from '../../content/about';
+
+interface Props {
+  content: IntroContent;
+}
+
+const { content } = Astro.props;
+---
+
+<!-- The page's "Who We Are": the core positioning, both lines, lit word by
+     word as the homepage statement is, the company in two paragraphs, and
+     the facts the site can state beside them. -->
+<section class="section" id="who-we-are" data-about-intro>
+  <div class="container">
+    <p class="section-label" data-intro-label>{content.label}</p>
+    <div class="intro-rule" aria-hidden="true"></div>
+    <div class="intro-grid">
+      <div class="intro-main">
+        <p class="intro-statement" data-intro-statement>
+          {content.statement.map((line) => <span class="statement-line">{line}</span>)}
+        </p>
+        <div class="intro-body">
+          {content.body.map((paragraph) => <p>{paragraph}</p>)}
+        </div>
+      </div>
+      <aside class="intro-glance" data-intro-glance>
+        <p class="glance-label">{content.glance.label}</p>
+        <dl class="glance-list">
+          {
+            content.glance.items.map((fact) => (
+              <div class="glance-row">
+                <dt>{fact.label}</dt>
+                <dd>{fact.value}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <a class="btn btn-ghost glance-link" href={content.glance.link.href}>
+          {content.glance.link.label}<span class="btn-arrow" aria-hidden="true">›</span>
+        </a>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap, lightWords, motionReady, revealUp, scrambleIn, EASE, REVEAL_START } from '../../lib/motion';
+
+  const section = document.querySelector('[data-about-intro]');
+  const label = document.querySelector('[data-intro-label]');
+  const statement = document.querySelector('[data-intro-statement]');
+  const glance = document.querySelector('[data-intro-glance]');
+
+  function revealFrame() {
+    if (!section) return;
+    // Rule sweeps in from the left; the body settles up after it.
+    gsap.from('[data-about-intro] .intro-rule', {
+      scaleX: 0,
+      transformOrigin: 'left center',
+      duration: 0.8,
+      ease: EASE,
+      scrollTrigger: { trigger: section, start: REVEAL_START },
+    });
+    revealUp('[data-about-intro] .intro-body > p', {
+      trigger: section,
+      delay: 0.25,
+      stagger: 0.09,
+    });
+    if (glance) {
+      revealUp('[data-intro-glance] .glance-label, [data-intro-glance] .glance-row, [data-intro-glance] .glance-link', {
+        trigger: glance,
+        stagger: 0.06,
+        y: 14,
+        duration: 0.6,
+      });
+    }
+  }
+
+  if (section && statement && label) {
+    motionReady(section, {
+      desktop: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        // The positioning line lights up word by word as it is read.
+        lightWords(statement, { scrub: true });
+      },
+      mobile: () => {
+        scrambleIn(label, { trigger: section });
+        revealFrame();
+        lightWords(statement);
+      },
+    });
+  }
+</script>
+
+<style>
+  .intro-rule {
+    height: 1px;
+    background: linear-gradient(to right, var(--orange), var(--line) 65%);
+    margin-bottom: clamp(1.75rem, 4vw, 3rem);
+  }
+
+  .intro-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: clamp(2.5rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .intro-main {
+    border-left: 2px solid var(--orange);
+    padding-left: clamp(1.25rem, 3vw, 2.25rem);
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .intro-statement {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    font-size: clamp(1.2rem, 2.2vw, 1.75rem);
+    line-height: 1.3;
+    letter-spacing: 0.01em;
+    color: var(--navy);
+    max-width: 44ch;
+  }
+
+  .statement-line {
+    display: block;
+  }
+
+  .statement-line + .statement-line {
+    margin-top: 0.65em;
+  }
+
+  .intro-body {
+    display: grid;
+    gap: 1rem;
+    color: var(--slate);
+    max-width: 40rem;
+  }
+
+  .intro-glance {
+    border: 1px solid var(--line);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    padding: 1.5rem 1.75rem 1.75rem;
+  }
+
+  .glance-label {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 0.6rem;
+  }
+
+  .glance-list {
+    margin-bottom: 1.5rem;
+  }
+
+  .glance-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.3fr);
+    gap: 1rem;
+    padding-block: 0.85rem;
+    border-top: 1px solid var(--line);
+    font-size: 0.93rem;
+  }
+
+  .glance-row dt {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 0.72rem;
+    color: var(--orange);
+    padding-top: 0.2rem;
+  }
+
+  .glance-row dd {
+    font-weight: 500;
+    color: var(--navy);
+  }
+
+  @media (max-width: 1023.98px) {
+    .intro-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+
+    .intro-statement {
+      max-width: none;
+    }
+  }
+
+  @media (max-width: 479.98px) {
+    .glance-row {
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+    }
+  }
+</style>

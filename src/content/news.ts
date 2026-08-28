@@ -669,6 +669,14 @@ export const articles: Article[] = [
   }),
 ].sort((a, b) => b.date.localeCompare(a.date));
 
+/* The article a page links to by slug; a missing slug fails the build
+   rather than shipping a dead link. */
+export function articleBySlug(slug: string): Article {
+  const article = articles.find((item) => item.slug === slug);
+  if (!article) throw new Error(`news: no article with slug "${slug}"`);
+  return article;
+}
+
 export function latestArticles(count: number): Article[] {
   return articles.slice(0, count);
 }

@@ -107,10 +107,14 @@ export async function fetchList<T>(
 }
 
 /* A build renders seventeen routes off the same handful of documents, so each
-   one is fetched once and shared. The cache lives as long as the build. */
+   one is fetched once and shared. The cache lives as long as the build - but
+   the dev server keeps modules alive between requests, so caching there would
+   pin every page to the content from the first load until a restart. In dev,
+   fetch fresh every time; a Studio publish then shows on the next refresh. */
 const loaded = new Map<string, Promise<unknown>>();
 
 export function once<T>(key: string, load: () => Promise<T>): Promise<T> {
+  if (import.meta.env.DEV) return load();
   const existing = loaded.get(key);
   if (existing) return existing as Promise<T>;
   const promise = load();

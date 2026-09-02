@@ -2,7 +2,9 @@
 
 Company profile site for KCA, an integrated aviation aftermarket partner (parts, component MRO, technical services, global supply network).
 Astro 7, static output, hosted on Cloudflare Pages.
-Content is hardcoded in typed modules for now; a Sanity Studio is scaffolded at `/admin` but the site does NOT render from it yet (that wiring is a future bead).
+Content lives in two places at once right now: the typed modules in `src/content/*.ts`, which the pages still render from, and the Sanity dataset, which holds the same content 1:1 after the migration in `scripts/seed-from-modules.mjs`.
+The Studio at `/admin` is the dashboard, and its content model is real - but the pages do NOT fetch from it yet (that is bead kirana-d6q).
+Change copy in `src/content/*.ts` and re-seed with `npm run seed -- --replace`; `docs/content-model.md` maps the two sides field by field.
 
 Read `docs/positioning.md` before writing any copy - it is the single source of truth for vision, mission, positioning, and commitment lines.
 KCA is NOT a defense company: its sister company KCN (kiranacakra.co.id) is a layout reference only, and KCN must not be mentioned in site copy.
@@ -15,6 +17,7 @@ npx astro check && npm run build
 ```
 
 Both must exit zero before any work is considered done.
+Work that touches `src/sanity/` or the seed adds `npx sanity schema validate` and, with the env sourced, `SANITY_AUTH_TOKEN=$SANITY_WRITE_TOKEN npx sanity documents validate --yes` - see `docs/content-model.md`.
 There is no test suite yet, so this verifies types and a production build - nothing more.
 Then open the page in Chrome (dev server: `astro dev --background`, site at `localhost:4321`) and scroll it top to bottom at desktop and phone widths; be picky about what you see.
 
@@ -32,8 +35,10 @@ Then open the page in Chrome (dev server: `astro dev --background`, site at `loc
 - `src/components/home/` - the homepage sections: `Hero`, `WhoWeAre`, `Domains` (four pillar panels, pinned on desktop), `Partners` (the shared `NetworkMap` + a category marquee linking into `/partners`), `Commitment`, `News`. Reuse their patterns and CSS vocabulary; new page sections go in `src/components/<page>/`.
 - `src/lib/motion.ts` - GSAP setup and the ONLY entry points for animation: `motionReady` (desktop/mobile/reduced-motion contexts), `revealUp` (house scroll entrance), `scrambleIn` (label decode), `lightWords` (scroll-lit statement; pass `from`/`to` on navy bands), `whenVisible`, `REVEAL_START`.
 - `src/styles/global.css` - design tokens (`--navy`, `--orange`, `--blue`, `--slate`, fonts, easings), `.container`, `.section`, `.section-label`, `.band-navy`, `.btn` system.
-- `docs/positioning.md` - KCA copy source of truth. `IMAGE-SOURCES.md` - every placeholder image's origin and license; update it whenever an image is added or replaced.
-- `src/lib/cms.ts`, `src/lib/types.ts`, `src/sanity/`, `sanity.config.ts`, `scripts/seed.mjs`, `src/components/*.astro` (top level) - the Sanity scaffold. Leave it alone; it is not wired to the live pages.
+- `docs/positioning.md` - KCA copy source of truth. `docs/content-model.md` - the map between `src/content/*.ts` and the Sanity schema; read it before changing either. `IMAGE-SOURCES.md` - every placeholder image's origin and license; update it whenever an image is added or replaced.
+- `src/sanity/schemaTypes/` - the content model: `objects.ts` (the small repeated shapes), `sections.ts` (every band a page is built from, each with a `hidden` toggle), `documents.ts` (Site Settings and the pillar, article, partner category, and map pin collections), `pages.ts` (the six page singletons, each holding one reorderable `sections` array). `src/sanity/structure.ts` is the Studio's left-hand list; `sanity.config.ts` wires them together and pins the singletons; `sanity.cli.ts` is what the `sanity` CLI reads.
+- `scripts/seed-from-modules.mjs` - the migration: reads the six content modules through `scripts/load-content.mjs`, uploads every referenced image once, writes all 29 documents under stable ids, then reads them back and checks them field by field against the modules. Idempotent; `--replace` overwrites, `--dry-run` writes nothing.
+- `src/lib/cms.ts`, `src/lib/types.ts`, `src/lib/fallback.ts`, `src/lib/image.ts`, `src/components/*.astro` (top level), `src/layouts/Layout.astro` - dead KCN-era scaffold that still describes the OLD schema. Do not build on it; kirana-d6q deletes it.
 - `public/_redirects` - Cloudflare Pages SPA rewrite for Studio deep links; keep it.
 
 ## Design system (established by the homepage - inherit it, do not reinvent)
@@ -61,7 +66,8 @@ astro dev --background
 ```
 
 Manage it with `astro dev stop`, `astro dev status`, and `astro dev logs`.
-The site is at `localhost:4321`, the Studio at `localhost:4321/admin`.
+The site is at `localhost:4321`, the Studio at `localhost:4321/admin` (that origin is registered for CORS on project `ipx0k2h7`; a deployed origin needs its own).
+`npm run seed` migrates `src/content/*.ts` into the dataset.
 
 ## Documentation
 

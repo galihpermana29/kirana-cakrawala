@@ -105,3 +105,4 @@ It reads `sanity.cli.ts`, which needs `PUBLIC_SANITY_PROJECT_ID` in the environm
 
 `http://localhost:4321` is registered as a CORS origin on project `ipx0k2h7`, so the Studio at `localhost:4321/admin` can talk to the dataset.
 A deployed origin needs its own entry: `npx sanity cors add https://<host> --credentials`.
+`docs/publishing.md` covers that alongside the rest of the publish pipeline.

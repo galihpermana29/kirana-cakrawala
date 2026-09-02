@@ -5,6 +5,8 @@ Company profile site built with [Astro](https://astro.build), content managed in
 Editors manage everything from the Sanity Studio dashboard mounted at `/admin`: the bands each page is built from (reorder by dragging, switch one off with its Hidden toggle), every string, every picture, and the pillar, article, partner category, and map pin collections.
 The site is fully static; publishing in the Studio triggers a rebuild via webhook.
 
+**Editing the site?** You want `docs/EDITING.md`, which assumes no technical knowledge and none of the rest of this file.
+
 ## Stack
 
 - **Astro** renders the site as static HTML at build time.
@@ -32,19 +34,11 @@ The dataset already holds the site's content; a fresh project needs it imported 
 
 To add a new section type: define it in `src/sanity/schemaTypes/sections.ts`, register it in `index.ts` and in the page type's `sections` array in `pages.ts`, add its interface and GROQ projection in the matching `src/content/*.ts` module, and render it in that page's template.
 
-## Deploying to Cloudflare Pages
+## Deploying, and rebuild on publish
 
-1. Push this repo to GitHub.
-2. In the Cloudflare dashboard, create a Pages project from the repo with build command `npm run build` and output directory `dist`.
-3. Set the environment variables `PUBLIC_SANITY_PROJECT_ID` and `PUBLIC_SANITY_DATASET` in the Pages project settings.
-4. Add your `*.pages.dev` (and custom) domain to Sanity's CORS origins so `/admin` works in production.
+`docs/publishing.md` is the runbook: the Pages project and its three build variables, the deploy hook, the Sanity webhook that calls it (exact filter, projection and payload), the CORS origins, and how to prove the chain works end to end.
 
-### Rebuild on publish
-
-1. In Cloudflare Pages, create a **Deploy Hook** and copy its URL.
-2. In [sanity.io/manage](https://www.sanity.io/manage) under **API → Webhooks**, add a GROQ-powered webhook that POSTs to that URL on create, update, and delete.
-
-Publishing content in the Studio now redeploys the site automatically (typically live within a couple of minutes).
+The short version: publishing a document in the Studio fires a webhook at a Cloudflare deploy hook, which rebuilds the site from the dataset, and the change is live about two minutes later.
 
 A failed content fetch during a build intentionally fails the deploy, so a Sanity outage can never replace the live site with placeholder content.
 

@@ -2,42 +2,42 @@
 import PillarCta from '../../components/what-we-do/PillarCta.astro';
 import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
 import PillarHero from '../../components/what-we-do/PillarHero.astro';
-import { home } from '../../content/home';
-import {
-  aboutLink,
-  contactLink,
-  ctaImage,
-  pillarPages,
-  whatWeDoIndex,
-  whatWeDoLabels,
-} from '../../content/what-we-do';
+import { getSiteSettings } from '../../content/home';
+import { getWhatWeDoPage, visibleSections } from '../../content/what-we-do';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
 // The What We Do hub: the nav's landing point and the directory of the four
-// pillar pages.
-const first = pillarPages[0]!;
+// pillar pages, rendered from the bands Sanity holds for it.
+const [settings, page] = await Promise.all([getSiteSettings(), getWhatWeDoPage()]);
 ---
 
-<HomeLayout
-  title={`${whatWeDoIndex.title} - ${home.companyName}`}
-  description={whatWeDoIndex.standfirst}
->
-  <PillarHero
-    crumb={home.brandAbbr}
-    eyebrow={whatWeDoIndex.title}
-    heading={whatWeDoIndex.heading}
-    standfirst={whatWeDoIndex.standfirst}
-    image={whatWeDoIndex.image}
-    primary={{ label: `${whatWeDoLabels.startWith} ${first.name}`, href: first.href }}
-    secondary={contactLink}
-  />
-  <PillarGrid head={whatWeDoIndex.grid} items={pillarPages} />
-  <PillarCta
-    label={whatWeDoIndex.cta.label}
-    heading={whatWeDoIndex.cta.heading}
-    body={whatWeDoIndex.cta.body}
-    primary={contactLink}
-    secondary={aboutLink}
-    image={ctaImage}
-  />
+<HomeLayout title={page.metaTitle} description={page.metaDescription}>
+  {
+    visibleSections(page.sections).map((section) => (
+      <Fragment>
+        {section._type === 'pageHeroSection' && (
+          <PillarHero
+            crumb={settings.brandAbbr}
+            eyebrow={page.title}
+            heading={section.heading}
+            standfirst={section.standfirst}
+            image={section.image}
+            primary={section.primary}
+            secondary={section.secondary}
+          />
+        )}
+        {section._type === 'pillarGridSection' && <PillarGrid head={section} items={section.pillars} />}
+        {section._type === 'ctaSection' && (
+          <PillarCta
+            label={section.label}
+            heading={section.heading}
+            body={section.body}
+            primary={section.primary}
+            secondary={section.secondary}
+            image={settings.ctaImage}
+          />
+        )}
+      </Fragment>
+    ))
+  }
 </HomeLayout>

@@ -7,7 +7,7 @@ import {
   pad,
   type Article,
 } from '../../content/news';
-import type { SectionIntro } from '../../content/what-we-do';
+import type { SectionIntro } from '../../content/home';
 import ArticleCard from './ArticleCard.astro';
 
 interface Props {
@@ -32,7 +32,7 @@ const { head, articles } = Astro.props;
         aria-pressed="true"
         data-filter-pill="all"
       >
-        <span class="pill-count" aria-hidden="true">{pad(articleCount())}</span>
+        <span class="pill-count" aria-hidden="true">{pad(articleCount(articles))}</span>
         {newsLabels.all}
       </button>
       {
@@ -44,7 +44,7 @@ const { head, articles } = Astro.props;
             data-filter-pill={category}
           >
             <span class="pill-count" aria-hidden="true">
-              {pad(articleCount(category))}
+              {pad(articleCount(articles, category))}
             </span>
             {categoryLabels[category]}
           </button>

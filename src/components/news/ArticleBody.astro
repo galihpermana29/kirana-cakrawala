@@ -4,17 +4,39 @@ import {
   categoryLabels,
   longDate,
   newsLabels,
-  relatedPillar,
   type Article,
+  type ArticleBlock,
+  type PortableBlock,
 } from '../../content/news';
+import ArticleSpans from './ArticleSpans.astro';
 
 interface Props {
   article: Article;
+  /* The whole archive, newest first - the neighbours are read off it. */
+  articles: Article[];
 }
 
-const { article } = Astro.props;
-const pillar = relatedPillar(article);
-const { newer, older } = adjacentArticles(article);
+const { article, articles } = Astro.props;
+const pillar = article.pillar;
+const { newer, older } = adjacentArticles(articles, article);
+
+// The body is Portable Text: paragraphs and headings are blocks, a pull quote
+// is its own block type, and bullets arrive as a run of separate blocks - so
+// consecutive ones are gathered back into a single list here.
+type ProseGroup =
+  | { kind: 'list'; items: PortableBlock[] }
+  | { kind: 'single'; block: ArticleBlock };
+
+const prose: ProseGroup[] = [];
+for (const block of article.body) {
+  if (block._type === 'block' && block.listItem === 'bullet') {
+    const last = prose.at(-1);
+    if (last?.kind === 'list') last.items.push(block);
+    else prose.push({ kind: 'list', items: [block] });
+    continue;
+  }
+  prose.push({ kind: 'single', block });
+}
 ---
 
 <!-- Reading progress, desktop only: a hairline that fills across the top
@@ -45,7 +67,7 @@ const { newer, older } = adjacentArticles(article);
               <dt>{newsLabels.relatedCapability}</dt>
               <dd>
                 <a class="aside-link" href={pillar.href}>
-                  {pillar.label}
+                  {pillar.name}
                   <span class="btn-arrow" aria-hidden="true">›</span>
                 </a>
               </dd>
@@ -92,29 +114,30 @@ const { newer, older } = adjacentArticles(article);
 
     <div class="prose" data-prose>
       {
-        article.body.map((block) => {
-          switch (block.type) {
-            case 'heading':
-              return <h2>{block.text}</h2>;
-            case 'list':
-              return (
-                <ul>
-                  {block.items.map((item) => (
-                    <li>{item}</li>
-                  ))}
-                </ul>
-              );
-            case 'quote':
-              return (
-                <blockquote class="pullquote">
-                  <p>{block.text}</p>
-                  {block.cite && <footer>{block.cite}</footer>}
-                </blockquote>
-              );
-            default:
-              return <p>{block.text}</p>;
-          }
-        })
+        prose.map((group) =>
+          group.kind === 'list' ? (
+            <ul>
+              {group.items.map((item) => (
+                <li>
+                  <ArticleSpans block={item} />
+                </li>
+              ))}
+            </ul>
+          ) : group.block._type === 'articleQuote' ? (
+            <blockquote class="pullquote">
+              <p>{group.block.text}</p>
+              {group.block.cite && <footer>{group.block.cite}</footer>}
+            </blockquote>
+          ) : group.block.style === 'h2' ? (
+            <h2>
+              <ArticleSpans block={group.block} />
+            </h2>
+          ) : (
+            <p>
+              <ArticleSpans block={group.block} />
+            </p>
+          ),
+        )
       }
       <nav class="article-nav" aria-label="Adjacent articles" data-article-nav>
         {

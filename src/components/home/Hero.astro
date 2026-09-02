@@ -1,7 +1,12 @@
 ---
-import { home } from '../../content/home';
+import type { HomeHeroSection } from '../../content/home';
 
-const { hero, brandAbbr } = home;
+interface Props {
+  section: HomeHeroSection;
+  brandAbbr: string;
+}
+
+const { section: hero, brandAbbr } = Astro.props;
 ---
 
 <section class="hero" data-hero>

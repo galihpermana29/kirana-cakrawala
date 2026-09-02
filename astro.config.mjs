@@ -8,19 +8,24 @@ const env = loadEnv(process.env.NODE_ENV ?? 'production', process.cwd(), '');
 const projectId = env.PUBLIC_SANITY_PROJECT_ID;
 const dataset = env.PUBLIC_SANITY_DATASET || 'production';
 
-// Until PUBLIC_SANITY_PROJECT_ID is set in .env the site builds from
-// placeholder content and the /admin studio route is not mounted.
+// The site is built from the Sanity dataset and has no fallback content, so a
+// missing project id is a broken build, not a degraded one.
+if (!projectId) {
+  throw new Error(
+    'PUBLIC_SANITY_PROJECT_ID is not set. Copy .env.example to .env for local ' +
+      "work, and set it in the hosting provider's build environment.",
+  );
+}
+
 export default defineConfig({
-  integrations: projectId
-    ? [
-        sanity({
-          projectId,
-          dataset,
-          useCdn: false,
-          apiVersion: '2025-06-01',
-          studioBasePath: '/admin',
-        }),
-        react(),
-      ]
-    : [],
+  integrations: [
+    sanity({
+      projectId,
+      dataset,
+      useCdn: false,
+      apiVersion: '2025-06-01',
+      studioBasePath: '/admin',
+    }),
+    react(),
+  ],
 });

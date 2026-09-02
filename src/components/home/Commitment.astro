@@ -1,7 +1,11 @@
 ---
-import { home } from '../../content/home';
+import type { CommitmentSection } from '../../content/home';
 
-const { commitment } = home;
+interface Props {
+  section: CommitmentSection;
+}
+
+const { section: commitment } = Astro.props;
 ---
 
 <section class="band-navy section commitment" data-commitment>

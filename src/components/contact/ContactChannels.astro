@@ -1,25 +1,27 @@
 ---
-import { pad, type ChannelsContent } from '../../content/contact';
+import { pad, type ContactChannel } from '../../content/contact';
+import type { SectionIntro } from '../../content/home';
 
 interface Props {
-  content: ChannelsContent;
+  head: SectionIntro;
+  items: ContactChannel[];
 }
 
-const { content } = Astro.props;
+const { head, items } = Astro.props;
 ---
 
 <!-- The three ways in, each a card that is itself the action: the email
      card writes, the phone card dials, the office card jumps to the map. -->
 <section class="section channels" data-channels>
   <div class="container">
-    <p class="section-label" data-channels-label>{content.label}</p>
+    <p class="section-label" data-channels-label>{head.label}</p>
     <div class="section-head">
-      <h2>{content.heading}</h2>
-      <p class="section-intro">{content.intro}</p>
+      <h2>{head.heading}</h2>
+      <p class="section-intro">{head.intro}</p>
     </div>
     <div class="channel-cards">
       {
-        content.items.map((channel) => (
+        items.map((channel) => (
           <a class="channel-card" href={channel.href} data-channel-card>
             <p class="channel-eyebrow">
               <span class="channel-index">{pad(channel.index)}</span>

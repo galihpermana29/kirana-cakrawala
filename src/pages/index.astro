@@ -5,15 +5,32 @@ import Hero from '../components/home/Hero.astro';
 import News from '../components/home/News.astro';
 import Partners from '../components/home/Partners.astro';
 import WhoWeAre from '../components/home/WhoWeAre.astro';
-import { home } from '../content/home';
+import { getHomePage, getSiteSettings, visibleSections } from '../content/home';
+import { getArticles, latestArticles } from '../content/news';
 import HomeLayout from '../layouts/HomeLayout.astro';
+
+// The homepage renders the bands the Home page holds in Sanity, in the order
+// they are stored there, skipping the ones an editor has switched off.
+// The news teaser's cards are the newest articles, so it and /news cannot
+// drift; the page only says how many to show.
+const [settings, page, articles] = await Promise.all([
+  getSiteSettings(),
+  getHomePage(),
+  getArticles(),
+]);
 ---
 
-<HomeLayout title={`${home.companyName} - ${home.tagline}`}>
-  <Hero />
-  <WhoWeAre />
-  <Domains />
-  <Partners />
-  <Commitment />
-  <News />
+<HomeLayout title={page.metaTitle} description={page.metaDescription}>
+  {
+    visibleSections(page.sections).map((section) => (
+      <Fragment>
+        {section._type === 'homeHeroSection' && <Hero section={section} brandAbbr={settings.brandAbbr} />}
+        {section._type === 'whoWeAreSection' && <WhoWeAre section={section} />}
+        {section._type === 'pillarGridSection' && <Domains section={section} />}
+        {section._type === 'ecosystemSection' && <Partners section={section} brandAbbr={settings.brandAbbr} />}
+        {section._type === 'commitmentSection' && <Commitment section={section} />}
+        {section._type === 'newsTeaserSection' && <News section={section} articles={latestArticles(articles, section.count)} />}
+      </Fragment>
+    ))
+  }
 </HomeLayout>

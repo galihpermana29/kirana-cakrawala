@@ -1,7 +1,11 @@
 ---
-import { home } from '../../content/home';
+import type { WhoWeAreSection } from '../../content/home';
 
-const { whoWeAre } = home;
+interface Props {
+  section: WhoWeAreSection;
+}
+
+const { section: whoWeAre } = Astro.props;
 ---
 
 <section class="section" id="about" data-who>

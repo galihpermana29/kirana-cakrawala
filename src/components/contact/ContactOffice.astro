@@ -1,22 +1,24 @@
 ---
-import { home } from '../../content/home';
+import type { SiteSettings } from '../../content/home';
 import {
   addressLines,
   contactLabels,
   directionsUrl,
   mailHref,
   mapEmbedUrl,
+  mapTitle,
   OFFICE_ANCHOR,
   telHref,
-  type OfficeContent,
+  type OfficeSection,
 } from '../../content/contact';
 
 interface Props {
-  content: OfficeContent;
+  content: OfficeSection;
+  settings: SiteSettings;
 }
 
-const { content } = Astro.props;
-const lines = addressLines();
+const { content, settings } = Astro.props;
+const lines = addressLines(settings);
 ---
 
 <!-- Where the site's one named location is: the address as a card beside
@@ -40,16 +42,16 @@ const lines = addressLines();
             <span class="address-line">{content.country}</span>
           </p>
           <div class="office-lines">
-            <a class="office-line" href={mailHref(home.contact.email)}>
-              {home.contact.email}
+            <a class="office-line" href={mailHref(settings.contact.email)}>
+              {settings.contact.email}
             </a>
-            <a class="office-line" href={telHref(home.contact.phone)}>
-              {home.contact.phone}
+            <a class="office-line" href={telHref(settings.contact.phone)}>
+              {settings.contact.phone}
             </a>
           </div>
           <a
             class="btn btn-primary"
-            href={directionsUrl()}
+            href={directionsUrl(settings, content.country)}
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -60,8 +62,8 @@ const lines = addressLines();
 
       <figure class="office-map" data-office-map>
         <iframe
-          src={mapEmbedUrl()}
-          title={contactLabels.mapTitle}
+          src={mapEmbedUrl(settings, content.country)}
+          title={mapTitle(settings)}
           loading="lazy"
           referrerpolicy="no-referrer-when-downgrade"
           allowfullscreen

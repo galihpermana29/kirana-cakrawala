@@ -1,8 +1,12 @@
 ---
-import { home } from '../../content/home';
-import { pillarPage, whatWeDoLabels } from '../../content/what-we-do';
+import type { PillarGridSection } from '../../content/home';
+import { whatWeDoLabels } from '../../content/what-we-do';
 
-const { whatWeDo } = home;
+interface Props {
+  section: PillarGridSection;
+}
+
+const { section: whatWeDo } = Astro.props;
 ---
 
 <section class="band-navy section domains-section" id="pillars" data-domains>
@@ -47,7 +51,7 @@ const { whatWeDo } = home;
             <div class="container domain-copy">
               <h3 class="domain-name">{pillar.name}</h3>
               <p class="domain-description">{pillar.description}</p>
-              <a class="btn btn-ghost domain-link" href={pillarPage(pillar.id).href}>
+              <a class="btn btn-ghost domain-link" href={pillar.href}>
                 {whatWeDoLabels.explore} {pillar.name}<span class="btn-arrow" aria-hidden="true">›</span>
               </a>
             </div>

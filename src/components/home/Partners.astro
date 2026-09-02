@@ -1,9 +1,13 @@
 ---
-import { home } from '../../content/home';
-import { categoryHref } from '../../content/partners';
+import type { EcosystemSection } from '../../content/home';
 import NetworkMap from '../partners/NetworkMap.astro';
 
-const { ecosystem } = home;
+interface Props {
+  section: EcosystemSection;
+  brandAbbr: string;
+}
+
+const { section: ecosystem, brandAbbr } = Astro.props;
 ---
 
 <section class="section" id="ecosystem" data-partners>
@@ -21,7 +25,7 @@ const { ecosystem } = home;
   </div>
 
   <div class="container">
-    <NetworkMap />
+    <NetworkMap regions={ecosystem.regions} hq={ecosystem.hq} brandAbbr={brandAbbr} />
   </div>
 
   <!-- Each category scrolls past as a link into its tab on the Partners page;
@@ -34,7 +38,7 @@ const { ecosystem } = home;
             {ecosystem.categories.map((category) => (
               <a
                 class="marquee-item"
-                href={categoryHref(category.id)}
+                href={category.href}
                 tabindex={copy === 1 ? -1 : undefined}
               >
                 {category.name}

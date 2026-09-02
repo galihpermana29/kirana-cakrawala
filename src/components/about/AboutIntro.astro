@@ -1,8 +1,8 @@
 ---
-import type { IntroContent } from '../../content/about';
+import type { AboutIntroSection } from '../../content/about';
 
 interface Props {
-  content: IntroContent;
+  content: AboutIntroSection;
 }
 
 const { content } = Astro.props;
@@ -25,10 +25,10 @@ const { content } = Astro.props;
         </div>
       </div>
       <aside class="intro-glance" data-intro-glance>
-        <p class="glance-label">{content.glance.label}</p>
+        <p class="glance-label">{content.glanceLabel}</p>
         <dl class="glance-list">
           {
-            content.glance.items.map((fact) => (
+            content.glance.map((fact) => (
               <div class="glance-row">
                 <dt>{fact.label}</dt>
                 <dd>{fact.value}</dd>
@@ -36,8 +36,8 @@ const { content } = Astro.props;
             ))
           }
         </dl>
-        <a class="btn btn-ghost glance-link" href={content.glance.link.href}>
-          {content.glance.link.label}<span class="btn-arrow" aria-hidden="true">›</span>
+        <a class="btn btn-ghost glance-link" href={content.glanceLink.href}>
+          {content.glanceLink.label}<span class="btn-arrow" aria-hidden="true">›</span>
         </a>
       </aside>
     </div>

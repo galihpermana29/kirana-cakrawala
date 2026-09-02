@@ -1,0 +1,39 @@
+---
+import type { PortableBlock, PortableSpan } from '../../content/news';
+
+interface Props {
+  block: PortableBlock;
+}
+
+// The runs of text inside one Portable Text block, with the marks an editor
+// can put on them: bold, italic, and links.
+const { block } = Astro.props;
+
+const marksOf = (span: PortableSpan) => span.marks ?? [];
+const bold = (span: PortableSpan) => marksOf(span).includes('strong');
+const italic = (span: PortableSpan) => marksOf(span).includes('em');
+
+/* A mark that is not a decorator names an annotation on the block. */
+function href(span: PortableSpan): string | undefined {
+  const defs = block.markDefs ?? [];
+  for (const mark of marksOf(span)) {
+    const def = defs.find((candidate) => candidate._key === mark);
+    if (def?.href) return def.href;
+  }
+  return undefined;
+}
+---
+
+{
+  block.children.map((span) =>
+    href(span) ? (
+      <a href={href(span)}>{bold(span) ? (italic(span) ? <strong><em>{span.text}</em></strong> : <strong>{span.text}</strong>) : italic(span) ? <em>{span.text}</em> : span.text}</a>
+    ) : bold(span) ? (
+      italic(span) ? <strong><em>{span.text}</em></strong> : <strong>{span.text}</strong>
+    ) : italic(span) ? (
+      <em>{span.text}</em>
+    ) : (
+      span.text
+    ),
+  )
+}

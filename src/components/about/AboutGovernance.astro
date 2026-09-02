@@ -1,8 +1,12 @@
 ---
-import { GOVERNANCE_ANCHOR, pad, type GovernanceContent } from '../../content/about';
+import {
+  GOVERNANCE_ANCHOR,
+  pad,
+  type AboutGovernanceSection,
+} from '../../content/about';
 
 interface Props {
-  content: GovernanceContent;
+  content: AboutGovernanceSection;
 }
 
 const { content } = Astro.props;
@@ -35,11 +39,11 @@ const { content } = Astro.props;
     </div>
     <div class="governance-reading" data-governance-reading>
       <div class="reading-copy">
-        <p class="reading-label">{content.reading.label}</p>
-        <p class="reading-title">{content.reading.title}</p>
+        <p class="reading-label">{content.readingLabel}</p>
+        <p class="reading-title">{content.readingArticle.title}</p>
       </div>
-      <a class="btn btn-ghost" href={content.reading.link.href}>
-        {content.reading.link.label}<span class="btn-arrow" aria-hidden="true">›</span>
+      <a class="btn btn-ghost" href={content.readingArticle.href}>
+        {content.readingLinkLabel}<span class="btn-arrow" aria-hidden="true">›</span>
       </a>
     </div>
   </div>

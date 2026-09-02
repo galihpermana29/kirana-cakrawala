@@ -7,42 +7,45 @@ import PillarHero from '../../components/what-we-do/PillarHero.astro';
 import PillarOverview from '../../components/what-we-do/PillarOverview.astro';
 import PillarProcess from '../../components/what-we-do/PillarProcess.astro';
 import PillarSwitcher from '../../components/what-we-do/PillarSwitcher.astro';
-import { home } from '../../content/home';
+import { contactLink, getSiteSettings } from '../../content/home';
 import {
-  contactLink,
-  ctaImage,
+  getPillars,
+  getWhatWeDoPage,
   nextPillar,
   otherPillars,
-  otherPillarsGrid,
   pad,
-  pillarPages,
-  whatWeDoIndex,
   whatWeDoLabels,
   WHAT_WE_DO_PATH,
 } from '../../content/what-we-do';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
-// One template, four content instances - the pillar pages.
-export const getStaticPaths = (() =>
-  pillarPages.map((pillar) => ({
+// One template, one page per pillar in the collection. The bands here are
+// fixed - a pillar is a document, not a section array - and the copy this
+// template shares with its three siblings lives on the hub page, so the four
+// cannot drift apart.
+export const getStaticPaths = (async () => {
+  const pillars = await getPillars();
+  return pillars.map((pillar) => ({
     params: { slug: pillar.slug },
-    props: { pillar },
-  }))) satisfies GetStaticPaths;
+    props: { pillar, pillars },
+  }));
+}) satisfies GetStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { pillar } = Astro.props;
-const next = nextPillar(pillar);
+const { pillar, pillars } = Astro.props;
+const [settings, page] = await Promise.all([getSiteSettings(), getWhatWeDoPage()]);
+const next = nextPillar(pillars, pillar.id);
 ---
 
 <HomeLayout
-  title={`${pillar.name} - ${home.companyName}`}
+  title={`${pillar.name} - ${settings.companyName}`}
   description={pillar.standfirst}
 >
   <PillarHero
-    crumb={whatWeDoIndex.title}
+    crumb={page.title}
     crumbHref={WHAT_WE_DO_PATH}
-    eyebrow={`${pad(pillar.index)} of ${pad(pillarPages.length)}`}
+    eyebrow={`${pad(pillar.index)} of ${pad(pillars.length)}`}
     heading={pillar.name}
     standfirst={pillar.standfirst}
     image={pillar.image}
@@ -50,17 +53,17 @@ const next = nextPillar(pillar);
     primary={contactLink}
     secondary={{ label: whatWeDoLabels.allCapabilities, href: WHAT_WE_DO_PATH }}
   />
-  <PillarSwitcher current={pillar.id} />
+  <PillarSwitcher pillars={pillars} current={pillar.id} />
   <PillarOverview overview={pillar.overview} />
   <PillarCapabilities pillar={pillar} />
   <PillarProcess pillar={pillar} />
-  <PillarGrid head={otherPillarsGrid} items={otherPillars(pillar)} />
+  <PillarGrid head={page.otherPillarsHead} items={otherPillars(pillars, pillar.id)} />
   <PillarCta
     label={whatWeDoLabels.nextStep}
     heading={pillar.cta.heading}
     body={pillar.cta.body}
     primary={contactLink}
     secondary={{ label: `${whatWeDoLabels.next} ${next.name}`, href: next.href }}
-    image={ctaImage}
+    image={settings.ctaImage}
   />
 </HomeLayout>

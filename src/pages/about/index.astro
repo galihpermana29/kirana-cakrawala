@@ -6,41 +6,49 @@ import AboutVision from '../../components/about/AboutVision.astro';
 import PillarCta from '../../components/what-we-do/PillarCta.astro';
 import PillarGrid from '../../components/what-we-do/PillarGrid.astro';
 import PillarHero from '../../components/what-we-do/PillarHero.astro';
-import { aboutLabels, aboutPage, MISSION_ANCHOR } from '../../content/about';
-import { home } from '../../content/home';
-import { ctaImage, pillarPages, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+import { getAboutPage, visibleSections } from '../../content/about';
+import { getSiteSettings } from '../../content/home';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
 // The About Us page: the home of the full positioning - who KCA is, the
 // vision, all seven mission points, and the quality, safety, and governance
-// standard behind them. Opens and closes like every inner page and links
-// out through the four pillars, the Partners page, and Contact.
+// standard behind them. Its bands are rendered in the order Sanity stores
+// them; the hero's crumb and eyebrow come from Site Settings and the page's
+// own name, and the closing band from the Site Settings picture.
+const [settings, page] = await Promise.all([getSiteSettings(), getAboutPage()]);
 ---
 
-<HomeLayout
-  title={`${aboutPage.title} - ${home.companyName}`}
-  description={aboutPage.standfirst}
->
-  <PillarHero
-    crumb={home.brandAbbr}
-    eyebrow={aboutPage.title}
-    heading={aboutPage.heading}
-    standfirst={aboutPage.standfirst}
-    image={aboutPage.image}
-    primary={{ label: aboutLabels.ourMission, href: `#${MISSION_ANCHOR}` }}
-    secondary={{ label: home.whatWeDo.label, href: WHAT_WE_DO_PATH }}
-  />
-  <AboutIntro content={aboutPage.intro} />
-  <AboutVision content={aboutPage.vision} />
-  <AboutMission content={aboutPage.mission} />
-  <AboutGovernance content={aboutPage.governance} />
-  <PillarGrid head={aboutPage.pillars} items={pillarPages} />
-  <PillarCta
-    label={aboutPage.cta.label}
-    heading={aboutPage.cta.heading}
-    body={aboutPage.cta.body}
-    primary={aboutPage.cta.primary}
-    secondary={aboutPage.cta.secondary}
-    image={ctaImage}
-  />
+<HomeLayout title={page.metaTitle} description={page.metaDescription}>
+  {
+    visibleSections(page.sections).map((section) => (
+      <Fragment>
+        {section._type === 'pageHeroSection' && (
+          <PillarHero
+            crumb={settings.brandAbbr}
+            eyebrow={page.title}
+            heading={section.heading}
+            standfirst={section.standfirst}
+            image={section.image}
+            primary={section.primary}
+            secondary={section.secondary}
+          />
+        )}
+        {section._type === 'aboutIntroSection' && <AboutIntro content={section} />}
+        {section._type === 'aboutVisionSection' && <AboutVision content={section} />}
+        {section._type === 'aboutMissionSection' && <AboutMission content={section} />}
+        {section._type === 'aboutGovernanceSection' && <AboutGovernance content={section} />}
+        {section._type === 'pillarGridSection' && <PillarGrid head={section} items={section.pillars} />}
+        {section._type === 'ctaSection' && (
+          <PillarCta
+            label={section.label}
+            heading={section.heading}
+            body={section.body}
+            primary={section.primary}
+            secondary={section.secondary}
+            image={settings.ctaImage}
+          />
+        )}
+      </Fragment>
+    ))
+  }
 </HomeLayout>

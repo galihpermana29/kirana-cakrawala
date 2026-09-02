@@ -4,47 +4,54 @@ import ContactForm from '../../components/contact/ContactForm.astro';
 import ContactOffice from '../../components/contact/ContactOffice.astro';
 import PillarCta from '../../components/what-we-do/PillarCta.astro';
 import PillarHero from '../../components/what-we-do/PillarHero.astro';
-import {
-  contactLabels,
-  contactPage,
-  INQUIRY_ANCHOR,
-  OFFICE_ANCHOR,
-} from '../../content/contact';
-import { home } from '../../content/home';
-import { ctaImage } from '../../content/what-we-do';
+import { contactChannels, getContactPage, visibleSections } from '../../content/contact';
+import { getSiteSettings } from '../../content/home';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
-// The Contact Us page: the three ways to reach KCA, the inquiry form, and
-// the head office on the map. Opens and closes like every inner page; the
-// closing band leads back into the site rather than to itself.
+// The Contact Us page: the three ways to reach KCA, the inquiry form, and the
+// head office on the map. Each channel card names which detail from Site
+// Settings it shows, so the cards and the footer cannot disagree.
 
 // Web3Forms access key - public by design (send-only). Empty until .env is
 // set, in which case the form says so instead of failing silently.
 const accessKey = String(import.meta.env.PUBLIC_WEB3FORMS_KEY ?? '').trim();
+
+const [settings, page] = await Promise.all([getSiteSettings(), getContactPage()]);
 ---
 
-<HomeLayout
-  title={`${contactPage.title} - ${home.companyName}`}
-  description={contactPage.standfirst}
->
-  <PillarHero
-    crumb={home.brandAbbr}
-    eyebrow={contactPage.title}
-    heading={contactPage.heading}
-    standfirst={contactPage.standfirst}
-    image={contactPage.image}
-    primary={{ label: contactLabels.sendInquiry, href: `#${INQUIRY_ANCHOR}` }}
-    secondary={{ label: contactLabels.findOffice, href: `#${OFFICE_ANCHOR}` }}
-  />
-  <ContactChannels content={contactPage.channels} />
-  <ContactForm content={contactPage.inquiry} accessKey={accessKey} />
-  <ContactOffice content={contactPage.office} />
-  <PillarCta
-    label={contactPage.cta.label}
-    heading={contactPage.cta.heading}
-    body={contactPage.cta.body}
-    primary={contactPage.cta.primary}
-    secondary={contactPage.cta.secondary}
-    image={ctaImage}
-  />
+<HomeLayout title={page.metaTitle} description={page.metaDescription}>
+  {
+    visibleSections(page.sections).map((section) => (
+      <Fragment>
+        {section._type === 'pageHeroSection' && (
+          <PillarHero
+            crumb={settings.brandAbbr}
+            eyebrow={page.title}
+            heading={section.heading}
+            standfirst={section.standfirst}
+            image={section.image}
+            primary={section.primary}
+            secondary={section.secondary}
+          />
+        )}
+        {section._type === 'contactChannelsSection' && (
+          <ContactChannels head={section} items={contactChannels(section.items, settings)} />
+        )}
+        {section._type === 'inquirySection' && (
+          <ContactForm content={section} settings={settings} accessKey={accessKey} />
+        )}
+        {section._type === 'officeSection' && <ContactOffice content={section} settings={settings} />}
+        {section._type === 'ctaSection' && (
+          <PillarCta
+            label={section.label}
+            heading={section.heading}
+            body={section.body}
+            primary={section.primary}
+            secondary={section.secondary}
+            image={settings.ctaImage}
+          />
+        )}
+      </Fragment>
+    ))
+  }
 </HomeLayout>

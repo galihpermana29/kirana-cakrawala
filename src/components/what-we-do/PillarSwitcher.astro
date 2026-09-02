@@ -1,12 +1,13 @@
 ---
-import type { PillarId } from '../../content/home';
-import { pad, pillarPages, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+import type { PillarId, PillarSummary } from '../../content/home';
+import { pad, WHAT_WE_DO_PATH } from '../../content/what-we-do';
 
 interface Props {
+  pillars: PillarSummary[];
   current: PillarId;
 }
 
-const { current } = Astro.props;
+const { pillars, current } = Astro.props;
 ---
 
 <!-- One template, four instances: the strip makes the sibling pillars one
@@ -16,7 +17,7 @@ const { current } = Astro.props;
     <a class="switcher-label" href={WHAT_WE_DO_PATH}>Pillars</a>
     <div class="switcher-pills" data-switcher-pills>
       {
-        pillarPages.map((pillar) => (
+        pillars.map((pillar) => (
           <a
             class:list={['switcher-pill', { active: pillar.id === current }]}
             href={pillar.href}

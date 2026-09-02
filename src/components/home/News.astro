@@ -1,9 +1,14 @@
 ---
-import { home } from '../../content/home';
-import { latestArticles, newsLabels, shortDate } from '../../content/news';
+import type { NewsTeaserSection } from '../../content/home';
+import { newsLabels, shortDate, type Article } from '../../content/news';
 
-const { news } = home;
-const articles = latestArticles(3);
+interface Props {
+  section: NewsTeaserSection;
+  /* The newest articles, already cut to the teaser's count. */
+  articles: Article[];
+}
+
+const { section: news, articles } = Astro.props;
 ---
 
 <section class="section" id="news" data-news>

@@ -1,12 +1,11 @@
 ---
 import {
-  categoryPillars,
   ECOSYSTEM_ANCHOR,
   pad,
   partnersLabels,
   type PartnerCategory,
 } from '../../content/partners';
-import type { SectionIntro } from '../../content/what-we-do';
+import type { SectionIntro } from '../../content/home';
 
 interface Props {
   head: SectionIntro;
@@ -92,9 +91,9 @@ const tabId = (category: PartnerCategory) => `tab-${category.id}`;
               <div class="panel-pillars">
                 <p class="panel-label">{partnersLabels.connectedThrough}</p>
                 <div class="pillar-chips">
-                  {categoryPillars(category).map((pillar) => (
+                  {category.pillars.map((pillar) => (
                     <a class="pillar-chip" href={pillar.href}>
-                      {pillar.label}
+                      {pillar.name}
                       <span class="btn-arrow" aria-hidden="true">›</span>
                     </a>
                   ))}

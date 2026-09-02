@@ -2,7 +2,7 @@
 
 Company profile site built with [Astro](https://astro.build), content managed in [Sanity](https://www.sanity.io), hosted on [Cloudflare Pages](https://pages.cloudflare.com).
 
-Editors manage everything from the Sanity Studio dashboard mounted at `/admin`: page sections (add, remove, reorder), text, images, and brand colors.
+Editors manage everything from the Sanity Studio dashboard mounted at `/admin`: the bands each page is built from (reorder by dragging, switch one off with its Hidden toggle), every string, every picture, and the pillar, article, partner category, and map pin collections.
 The site is fully static; publishing in the Studio triggers a rebuild via webhook.
 
 ## Stack
@@ -17,21 +17,20 @@ The site is fully static; publishing in the Studio triggers a rebuild via webhoo
 1. Create a Sanity project: log in at [sanity.io/manage](https://www.sanity.io/manage) and create a new project, or run `npx sanity@latest init --bare` and copy the printed project ID.
 2. Copy `.env.example` to `.env` and fill in `PUBLIC_SANITY_PROJECT_ID`.
 3. Add CORS origins for the Studio: in [sanity.io/manage](https://www.sanity.io/manage) under **API → CORS origins**, add `http://localhost:4321` (with credentials) and later your production domain.
-4. (Recommended) Seed initial content: create a token with Editor permissions under **API → Tokens**, put it in `.env` as `SANITY_WRITE_TOKEN`, and run `npm run seed`.
-5. Run `npm run dev` and open `http://localhost:4321` for the site and `http://localhost:4321/admin` for the dashboard.
+4. Run `npm run dev` and open `http://localhost:4321` for the site and `http://localhost:4321/admin` for the dashboard.
 
-Until `PUBLIC_SANITY_PROJECT_ID` is set, the site renders placeholder content and `/admin` is not mounted.
+The dataset already holds the site's content; a fresh project needs it imported (`npx sanity dataset import ./backup.tar.gz production`) before anything will build.
+`PUBLIC_SANITY_PROJECT_ID` is required - without it the build stops rather than rendering placeholders.
 
 ## Content model
 
-- **Site Settings** (singleton): company name, tagline, logo, primary/accent colors, footer text.
-  Colors flow into the site as CSS variables, so the whole theme follows the dashboard.
-- **Page**: a title, a slug, and an array of sections.
-  The homepage is the page with slug `home`.
-- **Sections**: `Hero`, `About`, `Services`, `Gallery`, `Contact`.
-  Editors drag to reorder them; the frontend renders whatever order the array is in.
+- **Site Settings** (singleton): company name, abbreviation, tagline, the closing-band picture, the main navigation, and the contact details the footer and the Contact page both read.
+- **Pages** (six singletons: Home, About Us, What We Do, News & Articles, Partners, Contact Us): each is a title, its SEO fields, and one array of sections. Editors drag to reorder; the site renders whatever order the array is in and skips anything marked Hidden.
+- **Collections**: Pillars, Articles, Partner Categories, and Map Pins. The bands that show them hold references, so a pillar's name or picture is edited once and follows everywhere.
 
-To add a new section type: define it in `src/sanity/schemaTypes/sections.ts`, register it in `index.ts` and in the `page` schema's `sections` array, add a matching interface in `src/lib/types.ts`, and map it to a component in `src/components/SectionRenderer.astro`.
+`docs/content-model.md` is the full map: what the Studio holds, what the site derives from it at build time, and what stays in code.
+
+To add a new section type: define it in `src/sanity/schemaTypes/sections.ts`, register it in `index.ts` and in the page type's `sections` array in `pages.ts`, add its interface and GROQ projection in the matching `src/content/*.ts` module, and render it in that page's template.
 
 ## Deploying to Cloudflare Pages
 
@@ -56,4 +55,3 @@ A failed content fetch during a build intentionally fails the deploy, so a Sanit
 | `npm run dev`     | Dev server at `localhost:4321` (site + `/admin`)    |
 | `npm run build`   | Production build to `./dist/`                       |
 | `npm run preview` | Preview the production build locally                |
-| `npm run seed`    | Create initial Site Settings + homepage in Sanity   |

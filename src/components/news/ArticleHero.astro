@@ -2,7 +2,6 @@
 import {
   categoryLabels,
   longDate,
-  newsIndex,
   newsLabels,
   NEWS_PATH,
   type Article,
@@ -10,9 +9,11 @@ import {
 
 interface Props {
   article: Article;
+  /* How the News & Articles page names itself - the crumb above the title. */
+  crumb: string;
 }
 
-const { article } = Astro.props;
+const { article, crumb } = Astro.props;
 ---
 
 <!-- Editorial head: crumb, title, standfirst, meta on white, then the
@@ -22,7 +23,7 @@ const { article } = Astro.props;
     <div class="hero-copy">
       <p class="hero-eyebrow" data-hero-eyebrow>
         <span class="eyebrow-dot" aria-hidden="true"></span>
-        <a class="eyebrow-crumb" href={NEWS_PATH}>{newsIndex.title}</a>
+        <a class="eyebrow-crumb" href={NEWS_PATH}>{crumb}</a>
         <span class="eyebrow-sep" aria-hidden="true">/</span>
         <span data-hero-category>{categoryLabels[article.category]}</span>
       </p>

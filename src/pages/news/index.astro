@@ -2,37 +2,47 @@
 import ArticleFeed from '../../components/news/ArticleFeed.astro';
 import PillarCta from '../../components/what-we-do/PillarCta.astro';
 import PillarHero from '../../components/what-we-do/PillarHero.astro';
-import { home } from '../../content/home';
-import { articles, newsIndex, newsLabels } from '../../content/news';
-import { contactLink, ctaImage, WHAT_WE_DO_PATH } from '../../content/what-we-do';
+import { getSiteSettings } from '../../content/home';
+import { getArticles, getNewsPage, visibleSections } from '../../content/news';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
 // The News & Articles listing: the nav's landing point and the full archive,
-// newest first. Shares the What We Do hub's hero and CTA band so every inner
-// page opens and closes the same way.
-const latest = articles[0]!;
+// newest first. Its bands come from the page document; the archive itself is
+// the Article collection, ordered by publication date.
+const [settings, page, articles] = await Promise.all([
+  getSiteSettings(),
+  getNewsPage(),
+  getArticles(),
+]);
 ---
 
-<HomeLayout
-  title={`${newsIndex.title} - ${home.companyName}`}
-  description={newsIndex.standfirst}
->
-  <PillarHero
-    crumb={home.brandAbbr}
-    eyebrow={newsIndex.title}
-    heading={newsIndex.heading}
-    standfirst={newsIndex.standfirst}
-    image={newsIndex.image}
-    primary={{ label: newsLabels.readLatest, href: latest.href }}
-    secondary={contactLink}
-  />
-  <ArticleFeed head={newsIndex.feed} articles={articles} />
-  <PillarCta
-    label={newsIndex.cta.label}
-    heading={newsIndex.cta.heading}
-    body={newsIndex.cta.body}
-    primary={contactLink}
-    secondary={{ label: home.whatWeDo.label, href: WHAT_WE_DO_PATH }}
-    image={ctaImage}
-  />
+<HomeLayout title={page.metaTitle} description={page.metaDescription}>
+  {
+    visibleSections(page.sections).map((section) => (
+      <Fragment>
+        {section._type === 'pageHeroSection' && (
+          <PillarHero
+            crumb={settings.brandAbbr}
+            eyebrow={page.title}
+            heading={section.heading}
+            standfirst={section.standfirst}
+            image={section.image}
+            primary={section.primary}
+            secondary={section.secondary}
+          />
+        )}
+        {section._type === 'articleFeedSection' && <ArticleFeed head={section} articles={articles} />}
+        {section._type === 'ctaSection' && (
+          <PillarCta
+            label={section.label}
+            heading={section.heading}
+            body={section.body}
+            primary={section.primary}
+            secondary={section.secondary}
+            image={settings.ctaImage}
+          />
+        )}
+      </Fragment>
+    ))
+  }
 </HomeLayout>

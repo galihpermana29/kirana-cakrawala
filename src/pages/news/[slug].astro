@@ -4,39 +4,49 @@ import ArticleBody from '../../components/news/ArticleBody.astro';
 import ArticleGrid from '../../components/news/ArticleGrid.astro';
 import ArticleHero from '../../components/news/ArticleHero.astro';
 import PillarCta from '../../components/what-we-do/PillarCta.astro';
-import { home } from '../../content/home';
+import { getSiteSettings } from '../../content/home';
 import {
   articleCta,
-  articles,
-  continueReading,
+  getArticles,
+  getNewsPage,
   relatedArticles,
 } from '../../content/news';
-import { ctaImage } from '../../content/what-we-do';
 import HomeLayout from '../../layouts/HomeLayout.astro';
 
-// One template, one page per article.
-export const getStaticPaths = (() =>
-  articles.map((article) => ({
+// One template, one page per article. An article closes on its pillar's band;
+// company news, which expands no pillar, borrows the listing page's.
+export const getStaticPaths = (async () => {
+  const articles = await getArticles();
+  return articles.map((article) => ({
     params: { slug: article.slug },
-    props: { article },
-  }))) satisfies GetStaticPaths;
+    props: { article, articles },
+  }));
+}) satisfies GetStaticPaths;
 
 type Props = InferGetStaticPropsType<typeof getStaticPaths>;
 
-const { article } = Astro.props;
-const cta = articleCta(article);
+const { article, articles } = Astro.props;
+const [settings, page] = await Promise.all([getSiteSettings(), getNewsPage()]);
+const cta = articleCta(article, page);
 ---
 
-<HomeLayout title={`${article.title} - ${home.companyName}`} description={article.excerpt}>
-  <ArticleHero article={article} />
-  <ArticleBody article={article} />
-  <ArticleGrid head={continueReading} items={relatedArticles(article)} />
-  <PillarCta
-    label={cta.label}
-    heading={cta.heading}
-    body={cta.body}
-    primary={cta.primary}
-    secondary={cta.secondary}
-    image={ctaImage}
-  />
+<HomeLayout
+  title={`${article.title} - ${settings.companyName}`}
+  description={article.excerpt}
+>
+  <ArticleHero article={article} crumb={page.title} />
+  <ArticleBody article={article} articles={articles} />
+  <ArticleGrid head={page.continueReadingHead} items={relatedArticles(articles, article)} />
+  {
+    cta && (
+      <PillarCta
+        label={cta.label}
+        heading={cta.heading}
+        body={cta.body}
+        primary={cta.primary}
+        secondary={cta.secondary}
+        image={settings.ctaImage}
+      />
+    )
+  }
 </HomeLayout>

@@ -1,8 +1,12 @@
 ---
 import DottedMap from 'dotted-map';
-import { home, type NetworkNode } from '../../content/home';
+import type { MapPin } from '../../content/home';
 
 interface Props {
+  /* The neutral nodes, and the anchor the arcs radiate from. */
+  regions: MapPin[];
+  hq: MapPin;
+  brandAbbr: string;
   /* Dot rows in the generated map; more rows keep the density up when the
      map is rendered wider. The homepage uses 60, the Partners page 80. */
   height?: number;
@@ -12,8 +16,14 @@ interface Props {
   labelled?: boolean;
 }
 
-const { height = 60, arcs = false, labelled = false } = Astro.props;
-const { ecosystem, brandAbbr } = home;
+const {
+  regions,
+  hq: hqPin,
+  brandAbbr,
+  height = 60,
+  arcs = false,
+  labelled = false,
+} = Astro.props;
 
 // Build-time generation; the SVG is static markup by the time it ships.
 const map = new DottedMap({ height, grid: 'diagonal' });
@@ -28,14 +38,14 @@ const mapSvg = map.getSVG({
 // it lines up with the pins, which are placed in percentages of the box.
 const { width: mapWidth, height: mapHeight } = map.image;
 const viewBox = `0 0 ${mapWidth} ${mapHeight}`;
-const toMap = (node: NetworkNode) => ({
+const toMap = (node: MapPin) => ({
   x: (node.xPct / 100) * mapWidth,
   y: (node.yPct / 100) * mapHeight,
 });
-const hq = toMap(ecosystem.hq);
+const hq = toMap(hqPin);
 // Quadratic arcs bowed northward, lifted in proportion to their span so the
 // long routes clear the pins they pass.
-const connections = ecosystem.network.map((node) => {
+const connections = regions.map((node) => {
   const to = toMap(node);
   const span = Math.hypot(to.x - hq.x, to.y - hq.y);
   const lift = Math.min(mapHeight * 0.6, span * 0.5);
@@ -48,7 +58,7 @@ const connections = ecosystem.network.map((node) => {
 const signalRadius = (mapHeight * 0.011).toFixed(2);
 // Pins on the right third would push their labels off a phone-width map, so
 // those labels sit on the pin's left instead.
-const flipsLabel = (node: NetworkNode) => node.xPct > 65;
+const flipsLabel = (node: MapPin) => node.xPct > 65;
 ---
 
 <div class:list={['network-map', { labelled }]} data-network-map>
@@ -72,7 +82,7 @@ const flipsLabel = (node: NetworkNode) => node.xPct > 65;
     )
   }
   {
-    ecosystem.network.map((node) => (
+    regions.map((node) => (
       <button
         type="button"
         class:list={['map-pin', { 'map-pin-flip': flipsLabel(node) }]}
@@ -86,12 +96,12 @@ const flipsLabel = (node: NetworkNode) => node.xPct > 65;
     ))
   }
   <span
-    class:list={['map-pin', 'map-pin-hq', { 'map-pin-flip': flipsLabel(ecosystem.hq) }]}
-    style={`left: ${ecosystem.hq.xPct}%; top: ${ecosystem.hq.yPct}%`}
+    class:list={['map-pin', 'map-pin-hq', { 'map-pin-flip': flipsLabel(hqPin) }]}
+    style={`left: ${hqPin.xPct}%; top: ${hqPin.yPct}%`}
     data-map-pin-hq
   >
     <span class="map-pin-pulse" aria-hidden="true"></span>
-    <span class="map-pin-label map-pin-label-fixed">{brandAbbr} - {ecosystem.hq.name}</span>
+    <span class="map-pin-label map-pin-label-fixed">{brandAbbr} - {hqPin.name}</span>
   </span>
 </div>
 

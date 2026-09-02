@@ -1,14 +1,10 @@
 ---
-import {
-  pad,
-  whatWeDoLabels,
-  type PillarPage,
-  type SectionIntro,
-} from '../../content/what-we-do';
+import { pad, whatWeDoLabels } from '../../content/what-we-do';
+import type { PillarSummary, SectionIntro } from '../../content/home';
 
 interface Props {
   head: SectionIntro;
-  items: PillarPage[];
+  items: PillarSummary[];
 }
 
 const { head, items } = Astro.props;

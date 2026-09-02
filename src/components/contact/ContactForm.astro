@@ -1,21 +1,23 @@
 ---
-import { home } from '../../content/home';
+import type { SiteSettings } from '../../content/home';
 import {
   contactLabels,
   inquiryForm,
   INQUIRY_ANCHOR,
   mailHref,
   pad,
-  type InquiryContent,
+  type InquirySection,
 } from '../../content/contact';
 
 interface Props {
-  content: InquiryContent;
+  content: InquirySection;
+  settings: SiteSettings;
   /* PUBLIC_WEB3FORMS_KEY; empty means the form is not connected yet. */
   accessKey: string;
 }
 
-const { content, accessKey } = Astro.props;
+const { content, settings, accessKey } = Astro.props;
+const form = inquiryForm(settings);
 const connected = accessKey.length > 0;
 const fieldId = (name: string) => `inquiry-${name}`;
 const errorId = (name: string) => `inquiry-${name}-error`;
@@ -38,15 +40,15 @@ const { sent, failed, notConnected } = contactLabels;
         <form
           class="inquiry-form"
           method="post"
-          action={inquiryForm.endpoint}
+          action={form.endpoint}
           data-inquiry-form
-          data-subject={inquiryForm.subject}
+          data-subject={form.subject}
           data-error-required={contactLabels.errors.required}
           data-error-email={contactLabels.errors.email}
         >
           <input type="hidden" name="access_key" value={accessKey} />
-          <input type="hidden" name="subject" value={inquiryForm.subject} />
-          <input type="hidden" name="from_name" value={inquiryForm.fromName} />
+          <input type="hidden" name="subject" value={form.subject} />
+          <input type="hidden" name="from_name" value={form.fromName} />
           <!-- Web3Forms honeypot: a checkbox no visitor sees; a bot that ticks
                it is dropped server-side. -->
           <input
@@ -65,7 +67,7 @@ const { sent, failed, notConnected } = contactLabels;
                 <p class="notice-heading">{notConnected.heading}</p>
                 <p class="notice-body">
                   {notConnected.body}{' '}
-                  <a href={mailHref(home.contact.email)}>{home.contact.email}</a>.
+                  <a href={mailHref(settings.contact.email)}>{settings.contact.email}</a>.
                 </p>
               </div>
             )
@@ -73,7 +75,7 @@ const { sent, failed, notConnected } = contactLabels;
 
           <div class="form-fields">
             {
-              content.fields.map((field) => (
+              content.formFields.map((field) => (
                 <div class:list={['field', `field-${field.span}`]} data-inquiry-field>
                   <label class="field-label" for={fieldId(field.name)}>
                     <span>{field.label}</span>
@@ -142,7 +144,7 @@ const { sent, failed, notConnected } = contactLabels;
               <p class="result-body">
                 <span data-inquiry-result-message></span>
                 {failed.body}{' '}
-                <a href={mailHref(home.contact.email)}>{home.contact.email}</a>.
+                <a href={mailHref(settings.contact.email)}>{settings.contact.email}</a>.
               </p>
             </div>
           </div>
@@ -162,10 +164,10 @@ const { sent, failed, notConnected } = contactLabels;
 
       <aside class="inquiry-aside" data-inquiry-aside>
         <div class="aside-block">
-          <p class="aside-label">{content.nextSteps.label}</p>
+          <p class="aside-label">{content.nextStepsLabel}</p>
           <ol class="step-list">
             {
-              content.nextSteps.steps.map((step, i) => (
+              content.nextSteps.map((step, i) => (
                 <li class="step">
                   <span class="step-index" aria-hidden="true">{pad(i + 1)}</span>
                   <div class="step-copy">
@@ -178,10 +180,10 @@ const { sent, failed, notConnected } = contactLabels;
           </ol>
         </div>
         <div class="aside-block">
-          <p class="aside-label">{content.routes.label}</p>
+          <p class="aside-label">{content.routesLabel}</p>
           <div class="route-links">
             {
-              content.routes.items.map((route) => (
+              content.routes.map((route) => (
                 <a class="route-link" href={route.href}>
                   {route.label}<span class="btn-arrow" aria-hidden="true">›</span>
                 </a>

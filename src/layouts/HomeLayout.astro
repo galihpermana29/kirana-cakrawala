@@ -1,13 +1,16 @@
 ---
 import '../styles/global.css';
-import { home, mailHref, telHref } from '../content/home';
+import { getSiteSettings, mailHref, telHref } from '../content/home';
 
 interface Props {
   title?: string;
   description?: string;
 }
 
-const { title = home.companyName, description = home.tagline } = Astro.props;
+// The brand, the nav, and the contact block come from Site Settings, so the
+// header and footer are edited in one place in the Studio.
+const settings = await getSiteSettings();
+const { title = settings.companyName, description = settings.tagline } = Astro.props;
 const year = new Date().getFullYear();
 
 // Marks the nav entry for the page (or section of pages) being viewed.
@@ -36,12 +39,12 @@ const isCurrent = (href: string) =>
     <header class="site-header" data-header>
       <div class="container header-inner">
         <a href="/" class="brand">
-          <span class="brand-mark">{home.brandAbbr}</span>
-          <span class="brand-name">{home.companyName}</span>
+          <span class="brand-mark">{settings.brandAbbr}</span>
+          <span class="brand-name">{settings.companyName}</span>
         </a>
         <nav class="site-nav" aria-label="Main">
           {
-            home.nav.map((item) => (
+            settings.nav.map((item) => (
               <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
                 {item.label}
               </a>
@@ -59,7 +62,7 @@ const isCurrent = (href: string) =>
       </div>
       <nav class="mobile-nav" aria-label="Mobile" data-mobile-nav>
         {
-          home.nav.map((item) => (
+          settings.nav.map((item) => (
             <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
               {item.label}
             </a>
@@ -75,26 +78,26 @@ const isCurrent = (href: string) =>
     <footer class="site-footer band-navy" id="contact">
       <div class="container footer-grid">
         <div>
-          <p class="footer-brand">{home.companyName}</p>
-          <p class="footer-tagline">{home.tagline}</p>
+          <p class="footer-brand">{settings.companyName}</p>
+          <p class="footer-tagline">{settings.tagline}</p>
         </div>
         <div>
           <p class="footer-heading">Explore</p>
-          {home.nav.map((item) => <a class="footer-link" href={item.href}>{item.label}</a>)}
+          {settings.nav.map((item) => <a class="footer-link" href={item.href}>{item.label}</a>)}
         </div>
         <div>
           <p class="footer-heading">Contact</p>
-          <p class="footer-line">{home.contact.address}</p>
-          <a class="footer-link" href={mailHref(home.contact.email)}>
-            {home.contact.email}
+          <p class="footer-line">{settings.contact.address}</p>
+          <a class="footer-link" href={mailHref(settings.contact.email)}>
+            {settings.contact.email}
           </a>
-          <a class="footer-link" href={telHref(home.contact.phone)}>
-            {home.contact.phone}
+          <a class="footer-link" href={telHref(settings.contact.phone)}>
+            {settings.contact.phone}
           </a>
         </div>
       </div>
       <div class="container footer-legal">
-        <p>© {year} {home.companyName}, all rights reserved</p>
+        <p>© {year} {settings.companyName}, all rights reserved</p>
       </div>
     </footer>
 

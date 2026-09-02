@@ -1,32 +1,33 @@
 # Content model
 
-The map between `src/content/*.ts` - the typed modules the site still renders from today - and the Sanity schema in `src/sanity/schemaTypes/`.
-The modules were migrated into the dataset 1:1 by `scripts/seed-from-modules.mjs`; the pages are rewired to fetch from Sanity in a later bead.
-Read this before changing either side, so the two stay describable as the same content.
+What the Studio holds, what the site derives from it, and what stays in code.
+The dataset is the only content there is: the schema in `src/sanity/schemaTypes/` defines it, the query modules under `src/content/` fetch it, and nothing in the repo duplicates it.
+Read this before changing a schema type or a query, so the two stay describable as the same content.
 
 ## Shape
 
 Seven documents there is exactly one of, and four collections there are many of.
 
-| Sanity type | Document id | Comes from |
+| Sanity type | Document id | Fetched by |
 | --- | --- | --- |
-| `siteSettings` | `siteSettings` | `home.companyName`, `brandAbbr`, `tagline`, `nav`, `contact`, and `whatWeDo.ctaImage` |
-| `homePage` | `homePage` | `home` |
-| `aboutPage` | `aboutPage` | `about.aboutPage` |
-| `whatWeDoPage` | `whatWeDoPage` | `whatWeDo.whatWeDoIndex` + `whatWeDo.otherPillarsGrid` |
-| `newsPage` | `newsPage` | `news.newsIndex` + `news.continueReading` |
-| `partnersPage` | `partnersPage` | `partners.partnersPage` |
-| `contactPage` | `contactPage` | `contact.contactPage` |
-| `pillar` | `pillar-<pillarId>` | `whatWeDo.pillarPages` |
-| `article` | `article-<slug>` | `news.articles` |
-| `partnerCategory` | `partnerCategory-<categoryId>` | `partners.partnerCategories` |
-| `mapPin` | `mapPin-<slugified name>` | `home.ecosystem.network` and `home.ecosystem.hq` |
+| `siteSettings` | `siteSettings` | `getSiteSettings()` in `src/content/home.ts`, awaited by `HomeLayout` |
+| `homePage` | `homePage` | `getHomePage()` |
+| `aboutPage` | `aboutPage` | `getAboutPage()` |
+| `whatWeDoPage` | `whatWeDoPage` | `getWhatWeDoPage()` |
+| `newsPage` | `newsPage` | `getNewsPage()` |
+| `partnersPage` | `partnersPage` | `getPartnersPage()` |
+| `contactPage` | `contactPage` | `getContactPage()` |
+| `pillar` | `pillar-<pillarId>` | `getPillars()`, and the references on every pillar grid |
+| `article` | `article-<slug>` | `getArticles()` |
+| `partnerCategory` | `partnerCategory-<categoryId>` | the references on the ecosystem and category bands |
+| `mapPin` | `mapPin-<slugified name>` | the references on the ecosystem and network bands |
 
 A page document is `title`, `metaTitle`, `metaDescription`, and one `sections` array.
 Sections are typed objects, so a page can be reordered by dragging and a band can be switched off with its `hidden` toggle without losing its content.
 Every section type is listed in `src/sanity/schemaTypes/sections.ts`, and each page type declares which of them it may hold.
+The page templates render `visibleSections(page.sections)` in array order and map each `_type` onto one component, so both the order and the toggle take effect on the next build.
 
-| Page | Sections, in seeded order |
+| Page | Sections, in their current order |
 | --- | --- |
 | Home | `homeHeroSection`, `whoWeAreSection`, `pillarGridSection`, `ecosystemSection`, `commitmentSection`, `newsTeaserSection` |
 | About Us | `pageHeroSection`, `aboutIntroSection`, `aboutVisionSection`, `aboutMissionSection`, `aboutGovernanceSection`, `pillarGridSection`, `ctaSection` |
@@ -52,12 +53,12 @@ The copy their templates share sits on the hub page that owns them - `whatWeDoPa
 - The hero eyebrow of an inner page, from the page's `title`; its crumb, from `siteSettings.brandAbbr`.
 - A contact card's value and link, from its `kind` and `siteSettings.contact`, so the card and the footer can never disagree.
 
-**Interface micro-copy stays in the components:** button chrome and state labels such as `min read`, `Filter`, `Copy link`, `Newer` / `Older`, `Explore pillar`, `Next:`, and the inquiry form's sending, sent, and failed messages.
+**Interface micro-copy stays in code**, in the `*Labels` objects in each page module: button chrome and state labels such as `min read`, `Filter`, `Copy link`, `Newer` / `Older`, `Explore pillar`, `Next:`, and the inquiry form's sending, sent, and failed messages.
 These are interface, not content, and putting fifty of them in the Studio would bury the copy that matters.
 Every button whose label is part of the page's argument - every hero and closing-band button - is a `navItem` in Sanity and fully editable.
 
 **Copied rather than referenced.**
-The modules derive some strings from others so they can never disagree; in the dataset those are seeded as their own editable fields.
+A few strings are deliberately stored twice so each is editable where it is read.
 A mission point is printed both on the About page's mission list and on the page that expands it, and the schema says so in the field description.
 Change both together.
 
@@ -65,24 +66,30 @@ Change both together.
 
 Every picture is a `sourcedImage`: the asset, its `alt` text, and the `sourceUrl` recording where the file came from.
 `IMAGE-SOURCES.md` stays the human record; the `sourceUrl` field carries the same fact next to the image itself.
-The seed uploads each file in `public/images/` once - Sanity keys assets by content hash, so re-running it reuses what is already there.
+Images are fetched through the `IMAGE` projection in `src/lib/sanity.ts` (`{"ref": asset._ref, alt, sourceUrl}`) and the asset reference is turned into a Sanity CDN url with `@sanity/image-url` before it leaves that module, so a component only ever sees `{ src, alt, sourceUrl }` and never has to know Sanity's image shape.
 
 ## Ids and keys
 
-Document ids are stable and readable, and array item keys are derived from the content (`nav-1`, `capability-3`, `mission-6`, `b4` for the fifth body block).
-Both are chosen so a second seed run addresses the same documents and the same array items rather than making new ones.
+Document ids are stable and readable (`pillar-mro`, `article-introducing-kca`), and the seven singletons use their type name as their id.
+The queries address the singletons by id, so renaming a page in the Studio changes what it is called, never which document the site reads.
 
-## Seeding
+## Getting content in and out
+
+There is no seed script: the dataset is the content, and it is edited in the Studio at `/admin`.
+The site is built from what is **published** - the client asks for the `published` perspective, so a draft is invisible until an editor publishes it.
 
 ```
-npm run seed                 # create anything missing, leave existing edits alone
-npm run seed -- --replace    # overwrite every document with the module content
-npm run seed -- --dry-run    # build and report the documents, write nothing
+npx sanity dataset export production ./backup.tar.gz   # a full backup, documents and assets
+npx sanity dataset import ./backup.tar.gz production   # restore one
 ```
 
-The seed bundles the six TypeScript modules with esbuild (`scripts/load-content.mjs`), because they import each other without file extensions and Node cannot read them directly.
-After writing, it reads every document back and compares it field by field against the modules, and exits non-zero if a document it created does not match.
-A document that differs because it was edited in the Studio is reported as such, and left alone.
+Both read `sanity.cli.ts`, which needs `PUBLIC_SANITY_PROJECT_ID` in the environment (`set -a; . ./.env; set +a`) and a `SANITY_AUTH_TOKEN` with write access to import.
+
+## Failing rather than falling back
+
+`src/lib/sanity.ts` has no placeholder content and catches nothing.
+A dataset that cannot be reached, a document that is not there, and an empty collection each throw with the name of what is missing, which fails `astro build` with a non-zero exit.
+That is deliberate: a page with a hole in it must break the deploy rather than quietly replace the live site.
 
 ## Verifying the model
 
@@ -92,7 +99,8 @@ npx sanity schema validate                                        # the Studio s
 SANITY_AUTH_TOKEN=$SANITY_WRITE_TOKEN npx sanity documents validate --yes
 ```
 
-The last one downloads every document in the dataset, checks that every reference resolves, and validates each document against the schema - the machine-readable form of "open the Studio and check it is all there and editable".
+The build is the strongest check that a query still matches the schema: it renders all seventeen routes from the live dataset, and a field a query asks for and the schema no longer has shows up as a missing value on the page.
+The last command downloads every document in the dataset, checks that every reference resolves, and validates each document against the schema - the machine-readable form of "open the Studio and check it is all there and editable".
 It reads `sanity.cli.ts`, which needs `PUBLIC_SANITY_PROJECT_ID` in the environment (`set -a; . ./.env; set +a`).
 
 `http://localhost:4321` is registered as a CORS origin on project `ipx0k2h7`, so the Studio at `localhost:4321/admin` can talk to the dataset.

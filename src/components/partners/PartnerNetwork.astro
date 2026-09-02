@@ -1,14 +1,13 @@
 ---
-import { home } from '../../content/home';
-import { partnersLabels } from '../../content/partners';
-import type { SectionIntro } from '../../content/what-we-do';
+import { partnersLabels, type NetworkSection } from '../../content/partners';
 import NetworkMap from './NetworkMap.astro';
 
 interface Props {
-  head: SectionIntro;
+  section: NetworkSection;
+  brandAbbr: string;
 }
 
-const { head } = Astro.props;
+const { section: head, brandAbbr } = Astro.props;
 ---
 
 <!-- The homepage's dotted map, larger: a wider wrap, a denser grid, the
@@ -22,13 +21,20 @@ const { head } = Astro.props;
     </div>
   </div>
   <div class="network-wide">
-    <NetworkMap height={80} arcs labelled />
+    <NetworkMap
+      regions={head.regions}
+      hq={head.hq}
+      brandAbbr={brandAbbr}
+      height={80}
+      arcs
+      labelled
+    />
   </div>
   <div class="container">
     <ul class="map-legend" aria-label={partnersLabels.legend} data-network-legend>
       <li>
         <span class="legend-dot legend-dot-hq" aria-hidden="true"></span>
-        {home.brandAbbr} - {home.ecosystem.hq.name}
+        {brandAbbr} - {head.hq.name}
       </li>
       <li>
         <span class="legend-dot" aria-hidden="true"></span>

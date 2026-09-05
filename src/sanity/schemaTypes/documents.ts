@@ -39,6 +39,17 @@ export const siteSettings = defineType({
       validation: (rule) => rule.required(),
     }),
     defineField({
+      name: 'logo',
+      title: 'Logo',
+      description:
+        'Shown in the header instead of the abbreviation chip. Leave empty ' +
+        'to keep the text mark. A wide image with a transparent background ' +
+        'works best (SVG or PNG).',
+      type: 'sourcedImage',
+      group: 'brand',
+    }),
+
+    defineField({
       name: 'ctaImage',
       title: 'Closing band image',
       description:

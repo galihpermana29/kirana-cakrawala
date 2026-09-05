@@ -237,6 +237,8 @@ export interface SiteSettings {
   companyName: string;
   brandAbbr: string;
   tagline: string;
+  /* Replaces the header's abbreviation chip when set. */
+  logo?: SourcedImage;
   /* Behind the closing band at the foot of every inner page. */
   ctaImage: SourcedImage;
   nav: NavItem[];
@@ -249,6 +251,7 @@ export function getSiteSettings(): Promise<SiteSettings> {
       'Site Settings',
       `*[_id == "siteSettings"][0]{
         companyName, brandAbbr, tagline,
+        logo ${IMAGE},
         ctaImage ${IMAGE},
         nav[]${NAV_ITEM},
         contact{address, email, phone}
